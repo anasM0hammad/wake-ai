@@ -5,7 +5,6 @@ import {
   updateAlarm as updateAlarmService,
   deleteAlarm as deleteAlarmService,
   toggleAlarm as toggleAlarmService,
-  getActiveAlarm,
   snoozeCurrentAlarm,
   getRemainingSnoozes,
   startAlarmSession,
