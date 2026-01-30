@@ -2,19 +2,263 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== ROOT VARIABLES ===== */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* Font settings */
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
   font-weight: 400;
+
+  /* Color scheme */
+  color-scheme: light dark;
+
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+
+  /* Safe area insets for notched phones */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+}
+
+/* ===== BASE STYLES ===== */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  /* Prevent iOS text size adjustment */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
+  background-color: #f9fafb;
+  color: #111827;
+
+  /* Prevent overscroll/bounce on iOS */
+  overscroll-behavior: none;
+
+  /* Smooth font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dark mode body */
+.dark body,
+body.dark {
+  background-color: #09090b;
+  color: #fafafa;
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ===== SAFE AREA PADDING ===== */
+.safe-area-top {
+  padding-top: var(--safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: var(--safe-area-inset-bottom);
+}
+
+.safe-area-all {
+  padding-top: var(--safe-area-inset-top);
+  padding-right: var(--safe-area-inset-right);
+  padding-bottom: var(--safe-area-inset-bottom);
+  padding-left: var(--safe-area-inset-left);
+}
+
+/* ===== ALARM SCREEN STYLES ===== */
+/* Prevent interactions during alarm */
+.alarm-active {
+  /* Prevent text selection */
+  -webkit-user-select: none;
+  user-select: none;
+
+  /* Prevent touch callouts */
+  -webkit-touch-callout: none;
+
+  /* Prevent pull-to-refresh */
+  overscroll-behavior-y: contain;
+}
+
+/* Prevent text selection on interactive elements */
+button,
+[role="button"],
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* ===== SCROLL BEHAVIOR ===== */
+/* Hide scrollbar but allow scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Snap scrolling */
+.snap-y {
+  scroll-snap-type: y mandatory;
+}
+
+.snap-center {
+  scroll-snap-align: center;
+}
+
+/* ===== TOUCH INTERACTIONS ===== */
+/* Disable double-tap zoom on buttons */
+button,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/* Larger touch targets */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ===== FULLSCREEN HANDLING ===== */
+.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+}
+
+/* ===== ANIMATIONS ===== */
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Custom animations */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes confetti {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-confetti {
+  animation: confetti linear forwards;
+}
+
+/* ===== FOCUS STYLES ===== */
+/* Better focus indicators for accessibility */
+:focus-visible {
+  outline: 2px solid #0d9488;
+  outline-offset: 2px;
+}
+
+/* Remove focus ring for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ===== FORM ELEMENTS ===== */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+/* Remove default input styling on iOS */
+input[type="text"],
+input[type="number"],
+input[type="tel"],
+input[type="email"],
+input[type="password"] {
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
+}
+
+/* Number input without spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ===== UTILITIES ===== */
+/* High contrast text for sleepy eyes */
+.high-contrast {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Backdrop blur fallback */
+@supports not (backdrop-filter: blur(10px)) {
+  .backdrop-blur-sm {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
 }

@@ -1,8 +1,80 @@
+/*
+ * WakeAI - AI-Powered Alarm App
+ *
+ * TESTING CHECKLIST:
+ *
+ * [ ] Onboarding Flow
+ *     [ ] Welcome screen displays correctly
+ *     [ ] Notification permission request works
+ *     [ ] Battery optimization instructions show for device manufacturer
+ *     [ ] Kill switch code can be set (4 digits)
+ *     [ ] Model download shows progress and completes
+ *     [ ] Onboarding only shows once (persisted)
+ *
+ * [ ] Home Screen
+ *     [ ] Empty state shows when no alarm set
+ *     [ ] Add alarm button opens form
+ *     [ ] Time picker scrolls and selects correctly
+ *     [ ] Day selection works (including weekday shortcuts)
+ *     [ ] Alarm can be toggled on/off
+ *     [ ] Swipe-to-delete works on alarm card
+ *     [ ] Next alarm time displays correctly
+ *
+ * [ ] Alarm Ringing
+ *     [ ] Alarm fires at scheduled time
+ *     [ ] Audio plays and loops
+ *     [ ] Vibration works (if enabled)
+ *     [ ] Swipe-to-start gesture works
+ *     [ ] Questions display correctly
+ *     [ ] Answer validation works (correct/incorrect feedback)
+ *     [ ] Timer counts down per question
+ *     [ ] Kill switch modal opens and validates code
+ *     [ ] Snooze functionality works
+ *     [ ] Success screen shows on completion
+ *     [ ] Failure screen shows when time runs out
+ *     [ ] Stats are recorded after alarm ends
+ *
+ * [ ] Settings
+ *     [ ] Difficulty modes can be changed
+ *     [ ] Question categories can be toggled (min 1)
+ *     [ ] Alarm tone selection works
+ *     [ ] Snooze settings can be adjusted
+ *     [ ] Kill code can be changed
+ *     [ ] Vibration can be toggled
+ *     [ ] Reset settings works
+ *
+ * [ ] Dashboard (Premium)
+ *     [ ] Non-premium users see upgrade prompt
+ *     [ ] Premium users see full stats
+ *     [ ] Success rate displays correctly
+ *     [ ] Streaks are tracked properly
+ *
+ * [ ] LLM / Questions
+ *     [ ] Model loads successfully
+ *     [ ] Questions generate from LLM
+ *     [ ] Fallback questions work when LLM unavailable
+ *     [ ] Question preloading works 30 min before alarm
+ *     [ ] Cached questions are used when available
+ *
+ * [ ] Error Handling
+ *     [ ] App error boundary catches crashes
+ *     [ ] Alarm error boundary prevents stuck state
+ *     [ ] Network errors handled gracefully
+ *
+ * [ ] Android Specific
+ *     [ ] Notification channel created
+ *     [ ] Alarm notifications fire in background
+ *     [ ] Back button behavior correct
+ *     [ ] Safe area insets work on notched devices
+ *     [ ] Dark mode respects system preference
+ */
+
 import { useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Home, Onboarding, AlarmRingingPage, Settings, Dashboard } from './pages';
+import { ErrorBoundary, AlarmErrorBoundary } from './components/common';
 import { isOnboardingComplete } from './services/storage/settingsStorage';
 import { getSettings } from './services/storage/settingsStorage';
 import { initializeModel } from './services/llm/webllm';
@@ -140,7 +212,21 @@ function AppContent() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/onboarding" element={<Onboarding />} />
-      <Route path="/alarm-ringing" element={<AlarmRingingPage />} />
+      <Route
+        path="/alarm-ringing"
+        element={
+          <AlarmErrorBoundary
+            onDismiss={() => navigate('/', { replace: true })}
+            onCriticalError={(error) => {
+              console.error('Critical alarm error:', error);
+              // Auto-navigate home on critical error
+              setTimeout(() => navigate('/', { replace: true }), 3000);
+            }}
+          >
+            <AlarmRingingPage />
+          </AlarmErrorBoundary>
+        }
+      />
       <Route path="/settings" element={<Settings />} />
       <Route path="/dashboard" element={<Dashboard />} />
     </Routes>
@@ -149,9 +235,16 @@ function AppContent() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
+    <ErrorBoundary
+      message="Something went wrong with the app. Please try again."
+      onError={(error, errorInfo) => {
+        console.error('App crashed:', error, errorInfo);
+      }}
+    >
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

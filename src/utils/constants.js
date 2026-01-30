@@ -36,3 +36,24 @@ export const SNOOZE_DURATION_MINUTES = 5;
 
 // Ad timing constants
 export const AD_INTERSTITIAL_DELAY_MS = 1000;
+
+// Settings page constants with labels and descriptions
+export const DIFFICULTY_MODES = {
+  easy: { label: 'Easy', questions: 1, timePerQuestion: 60 },
+  medium: { label: 'Medium', questions: 3, timePerQuestion: 45 },
+  hard: { label: 'Hard', questions: 5, timePerQuestion: 30 }
+};
+
+export const QUESTION_CATEGORIES = {
+  math: { label: 'Math', description: 'Arithmetic and basic algebra problems' },
+  patterns: { label: 'Patterns', description: 'Number sequences and pattern recognition' },
+  general: { label: 'General Knowledge', description: 'Facts, trivia, and common knowledge' },
+  logic: { label: 'Logic', description: 'Simple reasoning and deduction puzzles' }
+};
+
+export const ALARM_TONES = {
+  gentle: { label: 'Gentle Wake', file: 'gentle.mp3' },
+  classic: { label: 'Classic Alarm', file: 'classic.mp3' },
+  intense: { label: 'Intense', file: 'intense.mp3' },
+  nature: { label: 'Nature Sounds', file: 'nature.mp3' }
+};
