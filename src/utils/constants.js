@@ -27,3 +27,12 @@ export const MODEL_CONFIG = {
 
 export const PRELOAD_BEFORE_ALARM_MS = 30 * 60 * 1000; // 30 minutes
 export const QUESTION_CACHE_SIZE = 10;
+
+// Alarm timing constants
+export const ALARM_TOLERANCE_SECONDS = 60;
+export const QUESTION_PRELOAD_MINUTES = 30;
+export const MAX_ALARM_RING_DURATION_MINUTES = 15;
+export const SNOOZE_DURATION_MINUTES = 5;
+
+// Ad timing constants
+export const AD_INTERSTITIAL_DELAY_MS = 1000;
