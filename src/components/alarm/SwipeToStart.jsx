@@ -2,13 +2,10 @@ import { useState, useRef } from 'react';
 
 export default function SwipeToStart({
   currentTime,
-  snoozesRemaining,
   onDismiss,
-  onSnooze,
   onKillSwitch
 }) {
   const [swipeOffset, setSwipeOffset] = useState(0);
-  const [swipeDirection, setSwipeDirection] = useState(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const touchStartX = useRef(0);
   const containerRef = useRef(null);
@@ -25,10 +22,10 @@ export default function SwipeToStart({
     if (isAnimating) return;
     const currentX = e.touches[0].clientX;
     const diff = currentX - touchStartX.current;
-    const clampedDiff = Math.max(-MAX_SWIPE, Math.min(MAX_SWIPE, diff));
+    // Only allow swiping right (positive direction)
+    const clampedDiff = Math.max(0, Math.min(MAX_SWIPE, diff));
 
     setSwipeOffset(clampedDiff);
-    setSwipeDirection(diff > 20 ? 'right' : diff < -20 ? 'left' : null);
   };
 
   const handleTouchEnd = () => {
@@ -41,17 +38,9 @@ export default function SwipeToStart({
       setTimeout(() => {
         onDismiss?.();
       }, 200);
-    } else if (swipeOffset < -SWIPE_THRESHOLD && snoozesRemaining > 0) {
-      // Swipe left - Snooze
-      setIsAnimating(true);
-      setSwipeOffset(-MAX_SWIPE);
-      setTimeout(() => {
-        onSnooze?.();
-      }, 200);
     } else {
       // Reset
       setSwipeOffset(0);
-      setSwipeDirection(null);
     }
   };
 
@@ -67,13 +56,7 @@ export default function SwipeToStart({
   const { time, ampm } = formatTime(currentTime);
 
   const getSwipeProgress = () => {
-    if (swipeDirection === 'right') {
-      return Math.min(1, swipeOffset / SWIPE_THRESHOLD);
-    }
-    if (swipeDirection === 'left') {
-      return Math.min(1, Math.abs(swipeOffset) / SWIPE_THRESHOLD);
-    }
-    return 0;
+    return Math.min(1, swipeOffset / SWIPE_THRESHOLD);
   };
 
   const progress = getSwipeProgress();
@@ -120,28 +103,11 @@ export default function SwipeToStart({
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Left indicator (Snooze) */}
-          <div
-            className={`absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 transition-opacity ${
-              swipeDirection === 'left' ? 'opacity-100' : 'opacity-40'
-            }`}
-            style={{
-              opacity: swipeDirection === 'left' ? 0.4 + progress * 0.6 : 0.4
-            }}
-          >
-            <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-blue-400 font-medium">
-              Snooze {snoozesRemaining > 0 ? `(${snoozesRemaining})` : ''}
-            </span>
-          </div>
-
           {/* Right indicator (Dismiss) */}
           <div
-            className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 transition-opacity`}
+            className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2"
             style={{
-              opacity: swipeDirection === 'right' ? 0.4 + progress * 0.6 : 0.4
+              opacity: 0.4 + progress * 0.6
             }}
           >
             <span className="text-green-400 font-medium">Dismiss</span>
@@ -153,33 +119,31 @@ export default function SwipeToStart({
           {/* Swipe handle */}
           <div
             className={`absolute top-2 bottom-2 w-16 rounded-full flex items-center justify-center transition-colors ${
-              swipeDirection === 'right'
+              swipeOffset > 20
                 ? 'bg-green-500'
-                : swipeDirection === 'left'
-                ? 'bg-blue-500'
                 : 'bg-white'
             }`}
             style={{
-              left: `calc(50% - 32px + ${swipeOffset}px)`,
+              left: `calc(8px + ${swipeOffset}px)`,
               transition: isAnimating ? 'all 0.2s ease-out' : 'none'
             }}
           >
             <svg
               className={`w-6 h-6 ${
-                swipeDirection ? 'text-white' : 'text-gray-600'
+                swipeOffset > 20 ? 'text-white' : 'text-gray-600'
               }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>
           </div>
         </div>
 
         {/* Hint text */}
         <p className="text-center text-white/40 text-sm mt-4">
-          Swipe right to dismiss{snoozesRemaining > 0 ? ', left to snooze' : ''}
+          Swipe right to dismiss
         </p>
       </div>
     </div>

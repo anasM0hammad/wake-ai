@@ -3,11 +3,6 @@ import TimePicker from '../common/TimePicker';
 import { DIFFICULTY } from '../../utils/constants';
 import { usePremium } from '../../hooks/usePremium';
 
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const WEEKDAYS = [1, 2, 3, 4, 5];
-const WEEKENDS = [0, 6];
-const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6];
-
 export default function AlarmForm({
   alarm,
   onSave,
@@ -15,7 +10,6 @@ export default function AlarmForm({
   isOpen
 }) {
   const [time, setTime] = useState('07:00');
-  const [days, setDays] = useState([]);
   const [difficulty, setDifficulty] = useState('EASY');
 
   const { isPremium, triggerUpsell } = usePremium();
@@ -24,42 +18,16 @@ export default function AlarmForm({
   useEffect(() => {
     if (alarm) {
       setTime(alarm.time || '07:00');
-      setDays(alarm.days || []);
       setDifficulty(alarm.difficulty || 'EASY');
     } else {
       setTime('07:00');
-      setDays([]);
       setDifficulty('EASY');
     }
   }, [alarm, isOpen]);
 
-  const toggleDay = (dayIndex) => {
-    setDays(prev =>
-      prev.includes(dayIndex)
-        ? prev.filter(d => d !== dayIndex)
-        : [...prev, dayIndex].sort((a, b) => a - b)
-    );
-  };
-
-  const setQuickDays = (selection) => {
-    switch (selection) {
-      case 'weekdays':
-        setDays(WEEKDAYS);
-        break;
-      case 'weekends':
-        setDays(WEEKENDS);
-        break;
-      case 'everyday':
-        setDays(EVERY_DAY);
-        break;
-      case 'once':
-        setDays([]);
-        break;
-    }
-  };
-
   const handleDifficultySelect = (level) => {
-    if (level !== 'EASY' && !isPremium) {
+    const difficultyInfo = DIFFICULTY[level];
+    if (difficultyInfo?.premium && !isPremium) {
       triggerUpsell(level === 'MEDIUM' ? 'medium_difficulty' : 'hard_difficulty');
       return;
     }
@@ -70,25 +38,9 @@ export default function AlarmForm({
     onSave?.({
       id: alarm?.id,
       time,
-      days,
       difficulty,
       enabled: alarm?.enabled ?? true
     });
-  };
-
-  const isQuickSelected = (selection) => {
-    switch (selection) {
-      case 'weekdays':
-        return days.length === 5 && WEEKDAYS.every(d => days.includes(d));
-      case 'weekends':
-        return days.length === 2 && WEEKENDS.every(d => days.includes(d));
-      case 'everyday':
-        return days.length === 7;
-      case 'once':
-        return days.length === 0;
-      default:
-        return false;
-    }
   };
 
   if (!isOpen) return null;
@@ -131,54 +83,12 @@ export default function AlarmForm({
             />
           </div>
 
-          {/* Quick Day Selection */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Repeat</h3>
-            <div className="flex gap-2 mb-3">
-              {[
-                { key: 'once', label: 'Once' },
-                { key: 'weekdays', label: 'Weekdays' },
-                { key: 'weekends', label: 'Weekends' },
-                { key: 'everyday', label: 'Every day' }
-              ].map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => setQuickDays(key)}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                    isQuickSelected(key)
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {/* Day Buttons */}
-            <div className="flex gap-2">
-              {DAY_LABELS.map((day, index) => (
-                <button
-                  key={day}
-                  onClick={() => toggleDay(index)}
-                  className={`flex-1 aspect-square rounded-xl text-sm font-medium transition-colors flex items-center justify-center ${
-                    days.includes(index)
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {day[0]}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Difficulty */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-3">Difficulty</h3>
             <div className="space-y-2">
               {Object.entries(DIFFICULTY).map(([key, value]) => {
-                const isLocked = key !== 'EASY' && !isPremium;
+                const isLocked = value.premium && !isPremium;
                 const isSelected = difficulty === key;
 
                 return (

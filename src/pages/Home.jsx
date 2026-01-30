@@ -27,10 +27,6 @@ export default function Home() {
   }, [isOnboardingComplete, navigate]);
 
   const handleAddAlarm = () => {
-    if (isAlarmSet && !isPremium) {
-      triggerUpsell('multiple_alarms');
-      return;
-    }
     setEditingAlarm(null);
     setShowAlarmForm(true);
   };
@@ -45,13 +41,6 @@ export default function Home() {
       await updateAlarm(alarmData.id, alarmData);
     } else {
       await createAlarm(alarmData.time, alarmData.difficulty);
-      // Update with days if specified
-      if (alarmData.days && alarmData.days.length > 0) {
-        const newAlarm = await createAlarm(alarmData.time, alarmData.difficulty);
-        if (newAlarm) {
-          await updateAlarm(newAlarm.id, { days: alarmData.days });
-        }
-      }
     }
     setShowAlarmForm(false);
     setEditingAlarm(null);
@@ -68,7 +57,7 @@ export default function Home() {
   };
 
   // Calculate next alarm info
-  const nextAlarmDate = alarm?.enabled ? getNextAlarmDate(alarm.time, alarm.days) : null;
+  const nextAlarmDate = alarm?.enabled ? getNextAlarmDate(alarm.time) : null;
   const timeUntilAlarm = nextAlarmDate ? getTimeUntilAlarm(nextAlarmDate) : null;
 
   const getModelStatusDisplay = () => {
@@ -113,11 +102,18 @@ export default function Home() {
                     triggerUpsell('dashboard');
                   }
                 }}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors relative"
               >
                 <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
+                {!isPremium && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                )}
               </button>
             </div>
           </div>
@@ -149,7 +145,7 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="p-6">
-        {/* Alarm List */}
+        {/* Alarm Display */}
         {isAlarmSet ? (
           <div className="space-y-4">
             <AlarmCard
@@ -166,8 +162,8 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No alarms set</h2>
-            <p className="text-gray-600 mb-6">Create your first alarm to get started</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Set Your Alarm</h2>
+            <p className="text-gray-600 mb-6">Create your alarm to get started</p>
             <button
               onClick={handleAddAlarm}
               className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
@@ -192,7 +188,7 @@ export default function Home() {
               <div className="flex-1">
                 <h3 className="font-semibold text-gray-900">Upgrade to Premium</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Get harder questions, more alarms, and premium tones
+                  Get harder questions, dashboard stats, and premium tones
                 </p>
               </div>
               <button
@@ -205,18 +201,6 @@ export default function Home() {
           </div>
         )}
       </div>
-
-      {/* FAB for adding alarm when one exists */}
-      {isAlarmSet && (
-        <button
-          onClick={handleAddAlarm}
-          className="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 active:bg-indigo-800 transition-colors flex items-center justify-center"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
-      )}
 
       {/* Alarm Form Modal */}
       <AlarmForm

@@ -5,8 +5,6 @@ import {
   updateAlarm as updateAlarmService,
   deleteAlarm as deleteAlarmService,
   toggleAlarm as toggleAlarmService,
-  snoozeCurrentAlarm,
-  getRemainingSnoozes,
   startAlarmSession,
   endAlarmSession,
   updateSessionProgress,
@@ -16,8 +14,7 @@ import {
 import {
   setupNotificationChannel,
   setupNotificationListeners,
-  setOnAlarmTrigger,
-  scheduleAlarm
+  setOnAlarmTrigger
 } from '../services/alarm/alarmScheduler';
 import {
   playAlarmWithVibration,
@@ -101,19 +98,6 @@ export function useAlarm() {
     return newSession;
   }, []);
 
-  // Snooze current alarm
-  const snooze = useCallback(async () => {
-    stopAlarmWithVibration();
-
-    const result = await snoozeCurrentAlarm();
-    if (result.success) {
-      setSession(getCurrentSession());
-      setActiveAlarmState(null);
-    }
-
-    return result;
-  }, []);
-
   // Dismiss alarm with result
   const dismiss = useCallback(async (result = 'win') => {
     stopAlarmWithVibration();
@@ -140,12 +124,6 @@ export function useAlarm() {
       }
     }
 
-    // Reschedule alarm if it's recurring
-    const currentAlarm = getAlarm();
-    if (currentAlarm?.enabled && currentAlarm?.days?.length > 0) {
-      await scheduleAlarm(currentAlarm);
-    }
-
     return sessionSummary;
   }, []);
 
@@ -156,14 +134,8 @@ export function useAlarm() {
     return updated;
   }, []);
 
-  // Get remaining snoozes
-  const snoozesRemaining = getRemainingSnoozes();
-
   // Check if alarm is currently ringing
   const isRinging = isSessionActive() && getCurrentSession()?.status === 'ringing';
-
-  // Check if alarm is snoozed
-  const isSnoozed = isSessionActive() && getCurrentSession()?.status === 'snoozed';
 
   // Set callback for when alarm triggers
   const onAlarmTrigger = useCallback((callback) => {
@@ -189,14 +161,11 @@ export function useAlarm() {
 
     // Alarm control
     startAlarm,
-    snooze,
     dismiss,
     answerQuestion,
 
     // State
-    snoozesRemaining,
     isRinging,
-    isSnoozed,
 
     // Events
     onAlarmTrigger

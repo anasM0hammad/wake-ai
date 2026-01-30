@@ -1,46 +1,17 @@
 import { useState, useEffect } from 'react';
-import { getRecommendedModelSize, getDeviceRAM } from '../../utils/deviceInfo';
 import { useLLM } from '../../hooks/useLLM';
 import { updateSettings } from '../../services/storage/settingsStorage';
 
-const MODEL_INFO = {
-  small: {
-    name: 'Qwen 0.5B',
-    size: '~350MB',
-    description: 'Fast and lightweight, perfect for most devices'
-  },
-  large: {
-    name: 'Qwen 1.5B',
-    size: '~1GB',
-    description: 'More capable, recommended for devices with 6GB+ RAM'
-  }
-};
-
 export default function ModelDownload({ onNext, onBack }) {
-  const [recommendedSize, setRecommendedSize] = useState('small');
-  const [selectedSize, setSelectedSize] = useState('small');
-  const [deviceRam, setDeviceRam] = useState(0);
-  const [isDetecting, setIsDetecting] = useState(true);
+  const [isStarting, setIsStarting] = useState(false);
 
-  const { modelStatus, loadingProgress, initializeModel, isReady, isLoading, hasError, error } = useLLM();
-
-  useEffect(() => {
-    detectDevice();
-  }, []);
-
-  const detectDevice = async () => {
-    setIsDetecting(true);
-    const ram = await getDeviceRAM();
-    const recommended = await getRecommendedModelSize();
-
-    setDeviceRam(ram);
-    setRecommendedSize(recommended);
-    setSelectedSize(recommended);
-    setIsDetecting(false);
-  };
+  const { loadingProgress, initializeModel, isReady, isLoading, hasError, error } = useLLM();
 
   const handleDownload = async () => {
-    await initializeModel(selectedSize);
+    setIsStarting(true);
+    // Model is automatically selected based on device capabilities
+    await initializeModel();
+    setIsStarting(false);
   };
 
   const handleSkip = () => {
@@ -54,14 +25,12 @@ export default function ModelDownload({ onNext, onBack }) {
     onNext();
   };
 
-  if (isDetecting) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-full px-6 py-8">
-        <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
-        <p className="text-gray-600">Detecting your device...</p>
-      </div>
-    );
-  }
+  // Auto-start download when starting is triggered
+  useEffect(() => {
+    if (isStarting && !isLoading && !isReady && !hasError) {
+      // Download already started via handleDownload
+    }
+  }, [isStarting, isLoading, isReady, hasError]);
 
   // Download complete
   if (isReady) {
@@ -163,7 +132,7 @@ export default function ModelDownload({ onNext, onBack }) {
     );
   }
 
-  // Initial state - model selection
+  // Initial state - no model selection, just download button
   return (
     <div className="flex flex-col min-h-full px-6 py-8">
       <div className="flex-1">
@@ -175,59 +144,22 @@ export default function ModelDownload({ onNext, onBack }) {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-3">Download AI Model</h2>
           <p className="text-gray-600 max-w-sm mx-auto">
-            Download the AI to generate unique questions. This only needs to happen once.
+            Download the AI to generate unique questions. The best model for your device will be automatically selected.
           </p>
         </div>
 
-        {deviceRam > 0 && (
-          <p className="text-center text-sm text-gray-500 mb-6">
-            Detected device RAM: ~{Math.round(deviceRam / 1024)}GB
-          </p>
-        )}
-
-        <div className="space-y-3 mb-6">
-          {['small', 'large'].map((size) => {
-            const info = MODEL_INFO[size];
-            const isRecommended = size === recommendedSize;
-
-            return (
-              <button
-                key={size}
-                onClick={() => setSelectedSize(size)}
-                className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
-                  selectedSize === size
-                    ? 'border-indigo-600 bg-indigo-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-gray-900">{info.name}</h4>
-                      {isRecommended && (
-                        <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">
-                          Recommended
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">{info.description}</p>
-                    <p className="text-sm text-gray-500 mt-1">{info.size}</p>
-                  </div>
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    selectedSize === size
-                      ? 'border-indigo-600 bg-indigo-600'
-                      : 'border-gray-300'
-                  }`}>
-                    {selectedSize === size && (
-                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
+        <div className="bg-indigo-50 rounded-xl p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-indigo-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h4 className="font-medium text-gray-900">Automatic Selection</h4>
+              <p className="text-sm text-gray-600 mt-1">
+                WakeAI will choose the optimal model based on your device's capabilities.
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="bg-gray-50 rounded-xl p-4">
@@ -246,7 +178,7 @@ export default function ModelDownload({ onNext, onBack }) {
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
-          Download {MODEL_INFO[selectedSize].name}
+          Download AI Model
         </button>
         <button
           onClick={handleSkip}

@@ -5,18 +5,13 @@ import {
 } from '../storage/alarmStorage';
 import {
   scheduleAlarm,
-  cancelAlarm,
-  scheduleSnooze as scheduleSnoozeNotification,
-  cancelAllSnoozes
+  cancelAlarm
 } from './alarmScheduler';
 import { getSettings } from '../storage/settingsStorage';
-import { SNOOZE_DURATION_MINUTES } from '../../utils/constants';
 
 // Session state
 let currentSession = null;
 let activeAlarm = null;
-
-const MAX_SNOOZES = 3;
 
 // Alarm CRUD operations
 
@@ -109,64 +104,17 @@ export function clearActiveAlarm() {
   activeAlarm = null;
 }
 
-// Snooze management
-
-export async function snoozeCurrentAlarm(minutes = SNOOZE_DURATION_MINUTES) {
-  if (!currentSession) {
-    return { success: false, error: 'No active alarm session' };
-  }
-
-  if (currentSession.snoozesRemaining <= 0) {
-    return { success: false, error: 'No snoozes remaining' };
-  }
-
-  currentSession.snoozesRemaining--;
-  currentSession.snoozeCount++;
-
-  const result = await scheduleSnoozeNotification(
-    currentSession.alarmId,
-    minutes
-  );
-
-  if (result.success) {
-    currentSession.status = 'snoozed';
-    currentSession.lastSnoozeAt = Date.now();
-  }
-
-  return {
-    ...result,
-    snoozesRemaining: currentSession.snoozesRemaining
-  };
-}
-
-export function getRemainingSnoozes() {
-  return currentSession?.snoozesRemaining ?? 0;
-}
-
-export function resetSnoozeCount() {
-  if (currentSession) {
-    currentSession.snoozesRemaining = MAX_SNOOZES;
-    currentSession.snoozeCount = 0;
-  }
-}
-
 // Alarm session management
 
 export function startAlarmSession(alarm) {
-  // Cancel any pending snoozes from previous sessions
-  cancelAllSnoozes();
-
   currentSession = {
     alarmId: alarm.id,
     alarm,
     startedAt: Date.now(),
     status: 'ringing',
-    snoozesRemaining: MAX_SNOOZES,
-    snoozeCount: 0,
     questionsAnswered: 0,
     questionsCorrect: 0,
-    wrongAnswers: 0,
-    lastSnoozeAt: null
+    wrongAnswers: 0
   };
 
   setActiveAlarm(alarm);
@@ -204,7 +152,6 @@ export function endAlarmSession(result) {
   // Clear session
   currentSession = null;
   clearActiveAlarm();
-  cancelAllSnoozes();
 
   return sessionSummary;
 }
@@ -243,11 +190,6 @@ export default {
   getActiveAlarm,
   setActiveAlarm,
   clearActiveAlarm,
-
-  // Snooze
-  snoozeCurrentAlarm,
-  getRemainingSnoozes,
-  resetSnoozeCount,
 
   // Session
   startAlarmSession,

@@ -1,7 +1,7 @@
 export const DIFFICULTY = {
-  EASY: { name: 'Easy', questions: 1 },
-  MEDIUM: { name: 'Medium', questions: 3 },
-  HARD: { name: 'Hard', questions: 5 }
+  EASY: { name: 'Easy', questions: 1, premium: false },
+  MEDIUM: { name: 'Medium', questions: 3, premium: true },
+  HARD: { name: 'Hard', questions: 5, premium: true }
 };
 
 export const MAX_WRONG_ANSWERS = 5;
@@ -31,17 +31,15 @@ export const QUESTION_CACHE_SIZE = 10;
 // Alarm timing constants
 export const ALARM_TOLERANCE_SECONDS = 60;
 export const QUESTION_PRELOAD_MINUTES = 30;
-export const MAX_ALARM_RING_DURATION_MINUTES = 15;
-export const SNOOZE_DURATION_MINUTES = 5;
 
 // Ad timing constants
 export const AD_INTERSTITIAL_DELAY_MS = 1000;
 
 // Settings page constants with labels and descriptions
 export const DIFFICULTY_MODES = {
-  easy: { label: 'Easy', questions: 1, timePerQuestion: 60 },
-  medium: { label: 'Medium', questions: 3, timePerQuestion: 45 },
-  hard: { label: 'Hard', questions: 5, timePerQuestion: 30 }
+  easy: { label: 'Easy', questions: 1, timePerQuestion: 60, premium: false },
+  medium: { label: 'Medium', questions: 3, timePerQuestion: 45, premium: true },
+  hard: { label: 'Hard', questions: 5, timePerQuestion: 30, premium: true }
 };
 
 export const QUESTION_CATEGORIES = {
@@ -52,8 +50,7 @@ export const QUESTION_CATEGORIES = {
 };
 
 export const ALARM_TONES = {
-  gentle: { label: 'Gentle Wake', file: 'gentle.mp3' },
-  classic: { label: 'Classic Alarm', file: 'classic.mp3' },
-  intense: { label: 'Intense', file: 'intense.mp3' },
-  nature: { label: 'Nature Sounds', file: 'nature.mp3' }
+  gentle: { label: 'Gentle Wake', file: 'gentle.mp3', premium: false },
+  classic: { label: 'Classic Alarm', file: 'classic.mp3', premium: true },
+  intense: { label: 'Intense', file: 'intense.mp3', premium: true }
 };

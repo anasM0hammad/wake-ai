@@ -1,6 +1,5 @@
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { getNextAlarmDate } from '../../utils/timeUtils';
-import { SNOOZE_DURATION_MINUTES } from '../../utils/constants';
 
 const ALARM_CHANNEL_ID = 'wakeai-alarm-channel';
 const ALARM_CHANNEL_NAME = 'WakeAI Alarms';
@@ -70,7 +69,7 @@ export async function scheduleAlarm(alarm) {
     // Cancel any existing notification for this alarm
     await cancelAlarm(alarm.id);
 
-    const alarmDate = getNextAlarmDate(alarm.time, alarm.days || []);
+    const alarmDate = getNextAlarmDate(alarm.time);
     const notificationId = hashStringToInt(alarm.id);
 
     await LocalNotifications.schedule({
@@ -122,63 +121,6 @@ export async function cancelAlarm(alarmId) {
   }
 }
 
-export async function rescheduleAllAlarms(alarms) {
-  try {
-    // Cancel all existing notifications
-    const pending = await LocalNotifications.getPending();
-    if (pending.notifications.length > 0) {
-      await LocalNotifications.cancel({
-        notifications: pending.notifications.map(n => ({ id: n.id }))
-      });
-    }
-
-    // Schedule enabled alarms
-    const enabledAlarms = alarms.filter(alarm => alarm.enabled);
-    const results = await Promise.all(
-      enabledAlarms.map(alarm => scheduleAlarm(alarm))
-    );
-
-    return results.every(result => result);
-  } catch (error) {
-    console.error('Failed to reschedule alarms:', error);
-    return false;
-  }
-}
-
-export async function scheduleSnooze(originalAlarmId, minutes = SNOOZE_DURATION_MINUTES) {
-  try {
-    const snoozeTime = new Date(Date.now() + minutes * 60 * 1000);
-    const snoozeId = hashStringToInt(`snooze-${originalAlarmId}-${Date.now()}`);
-
-    await LocalNotifications.schedule({
-      notifications: [
-        {
-          id: snoozeId,
-          title: 'WakeAI - Snooze Ended',
-          body: 'Time to wake up! Your snooze is over.',
-          schedule: {
-            at: snoozeTime,
-            allowWhileIdle: true
-          },
-          channelId: ALARM_CHANNEL_ID,
-          sound: 'alarm_sound.wav',
-          extra: {
-            alarmId: originalAlarmId,
-            type: 'snooze'
-          },
-          ongoing: true,
-          autoCancel: false
-        }
-      ]
-    });
-
-    return { success: true, snoozeTime };
-  } catch (error) {
-    console.error('Failed to schedule snooze:', error);
-    return { success: false, error: error.message };
-  }
-}
-
 export async function getScheduledAlarms() {
   try {
     const pending = await LocalNotifications.getPending();
@@ -192,25 +134,6 @@ export async function getScheduledAlarms() {
   } catch (error) {
     console.error('Failed to get scheduled alarms:', error);
     return [];
-  }
-}
-
-export async function cancelAllSnoozes() {
-  try {
-    const pending = await LocalNotifications.getPending();
-    const snoozeNotifications = pending.notifications.filter(
-      n => n.extra?.type === 'snooze'
-    );
-
-    if (snoozeNotifications.length > 0) {
-      await LocalNotifications.cancel({
-        notifications: snoozeNotifications.map(n => ({ id: n.id }))
-      });
-    }
-    return true;
-  } catch (error) {
-    console.error('Failed to cancel snoozes:', error);
-    return false;
   }
 }
 
@@ -231,8 +154,5 @@ export default {
   setOnAlarmTrigger,
   scheduleAlarm,
   cancelAlarm,
-  rescheduleAllAlarms,
-  scheduleSnooze,
-  getScheduledAlarms,
-  cancelAllSnoozes
+  getScheduledAlarms
 };

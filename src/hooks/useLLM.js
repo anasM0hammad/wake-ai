@@ -33,7 +33,7 @@ export function useLLM() {
     return unsubscribe;
   }, []);
 
-  const initializeModel = useCallback(async (modelSize = 'small') => {
+  const initializeModel = useCallback(async () => {
     if (initializingRef.current) {
       return false;
     }
@@ -46,7 +46,8 @@ export function useLLM() {
     setError(null);
 
     try {
-      const success = await initModel(modelSize);
+      // Model is now auto-selected based on device capabilities
+      const success = await initModel();
       return success;
     } catch (err) {
       setError(err.message);

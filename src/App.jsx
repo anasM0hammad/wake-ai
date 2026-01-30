@@ -8,49 +8,48 @@
  *     [ ] Notification permission request works
  *     [ ] Battery optimization instructions show for device manufacturer
  *     [ ] Kill switch code can be set (4 digits)
- *     [ ] Model download shows progress and completes
+ *     [ ] Model auto-downloads based on device capabilities
  *     [ ] Onboarding only shows once (persisted)
  *
  * [ ] Home Screen
  *     [ ] Empty state shows when no alarm set
  *     [ ] Add alarm button opens form
  *     [ ] Time picker scrolls and selects correctly
- *     [ ] Day selection works (including weekday shortcuts)
+ *     [ ] Single alarm only (no add button when alarm exists)
  *     [ ] Alarm can be toggled on/off
- *     [ ] Swipe-to-delete works on alarm card
+ *     [ ] Delete alarm button works
  *     [ ] Next alarm time displays correctly
  *
  * [ ] Alarm Ringing
  *     [ ] Alarm fires at scheduled time
  *     [ ] Audio plays and loops
  *     [ ] Vibration works (if enabled)
- *     [ ] Swipe-to-start gesture works
+ *     [ ] Swipe right to dismiss works
  *     [ ] Questions display correctly
  *     [ ] Answer validation works (correct/incorrect feedback)
- *     [ ] Timer counts down per question
  *     [ ] Kill switch modal opens and validates code
- *     [ ] Snooze functionality works
  *     [ ] Success screen shows on completion
- *     [ ] Failure screen shows when time runs out
+ *     [ ] Failure screen shows on 5 wrong answers
+ *     [ ] Failure screen shows on 20 min timeout
  *     [ ] Stats are recorded after alarm ends
+ *     [ ] Ad placeholder shows for free users on success
  *
  * [ ] Settings
- *     [ ] Difficulty modes can be changed
- *     [ ] Question categories can be toggled (min 1)
- *     [ ] Alarm tone selection works
- *     [ ] Snooze settings can be adjusted
+ *     [ ] Difficulty modes can be changed (Easy free, Medium/Hard premium)
+ *     [ ] Question categories toggle (free: 1 only, premium: multiple)
+ *     [ ] Alarm tone selection (free: gentle only, others premium)
  *     [ ] Kill code can be changed
  *     [ ] Vibration can be toggled
  *     [ ] Reset settings works
  *
- * [ ] Dashboard (Premium)
- *     [ ] Non-premium users see upgrade prompt
+ * [ ] Dashboard (Premium Only)
+ *     [ ] Non-premium users see upgrade prompt (stats still recorded)
  *     [ ] Premium users see full stats
  *     [ ] Success rate displays correctly
  *     [ ] Streaks are tracked properly
  *
  * [ ] LLM / Questions
- *     [ ] Model loads successfully
+ *     [ ] Model auto-selects based on RAM (>=6GB: large, <6GB: small)
  *     [ ] Questions generate from LLM
  *     [ ] Fallback questions work when LLM unavailable
  *     [ ] Question preloading works 30 min before alarm
@@ -118,7 +117,7 @@ function AppContent() {
     const settings = getSettings();
     if (settings.modelDownloaded) {
       console.log('Model was downloaded, initializing...');
-      initializeModel('small').catch(err => {
+      initializeModel().catch(err => {
         console.warn('Failed to initialize model:', err);
       });
     }

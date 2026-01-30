@@ -1,8 +1,5 @@
-import { useState } from 'react';
 import { formatTimeDisplay, getNextAlarmDate, getTimeUntilAlarm } from '../../utils/timeUtils';
 import { DIFFICULTY } from '../../utils/constants';
-
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function AlarmCard({
   alarm,
@@ -10,86 +7,16 @@ export default function AlarmCard({
   onEdit,
   onDelete
 }) {
-  const [showDelete, setShowDelete] = useState(false);
-  const [touchStart, setTouchStart] = useState(null);
-
-  const nextAlarmDate = getNextAlarmDate(alarm.time, alarm.days);
+  const nextAlarmDate = getNextAlarmDate(alarm.time);
   const timeUntil = getTimeUntilAlarm(nextAlarmDate);
   const difficultyInfo = DIFFICULTY[alarm.difficulty] || DIFFICULTY.EASY;
 
-  const handleTouchStart = (e) => {
-    setTouchStart(e.touches[0].clientX);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!touchStart) return;
-
-    const currentX = e.touches[0].clientX;
-    const diff = touchStart - currentX;
-
-    if (diff > 50) {
-      setShowDelete(true);
-    } else if (diff < -50) {
-      setShowDelete(false);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    setTouchStart(null);
-  };
-
-  const formatDays = (days) => {
-    if (!days || days.length === 0) {
-      return 'One time';
-    }
-    if (days.length === 7) {
-      return 'Every day';
-    }
-    if (days.length === 5 && !days.includes(0) && !days.includes(6)) {
-      return 'Weekdays';
-    }
-    if (days.length === 2 && days.includes(0) && days.includes(6)) {
-      return 'Weekends';
-    }
-    return days.map(d => DAY_LABELS[d]).join(', ');
-  };
-
   return (
-    <div
-      className="relative overflow-hidden"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* Delete button (revealed on swipe) */}
-      <div
-        className={`absolute right-0 top-0 bottom-0 w-20 bg-red-500 flex items-center justify-center transition-transform ${
-          showDelete ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        <button
-          onClick={() => {
-            onDelete?.(alarm.id);
-            setShowDelete(false);
-          }}
-          className="p-3"
-        >
-          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
-      </div>
-
+    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
       {/* Card content */}
       <div
-        className={`bg-white rounded-2xl p-4 shadow-sm border transition-all ${
-          showDelete ? '-translate-x-20' : 'translate-x-0'
-        } ${
-          alarm.enabled
-            ? 'border-gray-100'
-            : 'border-gray-200 bg-gray-50'
-        }`}
-        onClick={() => !showDelete && onEdit?.(alarm)}
+        className="cursor-pointer"
+        onClick={() => onEdit?.(alarm)}
       >
         <div className="flex items-center justify-between">
           <div className="flex-1">
@@ -102,11 +29,11 @@ export default function AlarmCard({
               </span>
             </div>
 
-            {/* Days */}
+            {/* One-time indicator */}
             <p className={`text-sm mt-1 ${
               alarm.enabled ? 'text-gray-600' : 'text-gray-400'
             }`}>
-              {formatDays(alarm.days)}
+              One time
             </p>
 
             {/* Time until & difficulty */}
@@ -131,7 +58,6 @@ export default function AlarmCard({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setShowDelete(false);
                 onToggle?.(alarm.id);
               }}
               className={`relative w-14 h-8 rounded-full transition-colors ${
@@ -146,39 +72,23 @@ export default function AlarmCard({
             </button>
           </div>
         </div>
-
-        {/* Day indicators */}
-        {alarm.days && alarm.days.length > 0 && alarm.days.length < 7 && (
-          <div className="flex gap-1 mt-3 pt-3 border-t border-gray-100">
-            {DAY_LABELS.map((day, index) => (
-              <span
-                key={day}
-                className={`flex-1 text-center text-xs py-1 rounded ${
-                  alarm.days.includes(index)
-                    ? alarm.enabled
-                      ? 'bg-indigo-100 text-indigo-700 font-medium'
-                      : 'bg-gray-200 text-gray-500'
-                    : 'text-gray-300'
-                }`}
-              >
-                {day[0]}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
 
-      {/* Delete button for non-touch devices */}
-      {!showDelete && (
+      {/* Delete button */}
+      <div className="mt-4 pt-4 border-t border-gray-100">
         <button
-          onClick={() => onDelete?.(alarm.id)}
-          className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete?.(alarm.id);
+          }}
+          className="w-full py-2 text-red-600 font-medium hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-2"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
+          Delete Alarm
         </button>
-      )}
+      </div>
     </div>
   );
 }

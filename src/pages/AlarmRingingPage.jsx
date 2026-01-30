@@ -9,15 +9,13 @@ import KillSwitchModal from '../components/alarm/KillSwitchModal';
 import AlarmSuccess from '../components/alarm/AlarmSuccess';
 import AlarmFailure from '../components/alarm/AlarmFailure';
 import { getRandomFallbackQuestions } from '../services/llm/fallbackQuestions';
-import { DIFFICULTY, MAX_WRONG_ANSWERS, MAX_ALARM_RING_DURATION_MINUTES } from '../utils/constants';
+import { DIFFICULTY, MAX_WRONG_ANSWERS, MAX_RING_DURATION_MS } from '../utils/constants';
 
 const STATES = {
   RINGING: 'ringing',
   QUESTIONING: 'questioning',
-  SNOOZE_QUESTION: 'snooze_question',
   SUCCESS: 'success',
-  FAILURE: 'failure',
-  SNOOZED: 'snoozed'
+  FAILURE: 'failure'
 };
 
 export default function AlarmRingingPage() {
@@ -28,10 +26,8 @@ export default function AlarmRingingPage() {
     alarm,
     activeAlarm,
     startAlarm,
-    snooze,
     dismiss,
-    answerQuestion,
-    snoozesRemaining
+    answerQuestion
   } = useAlarm();
 
   const { settings } = useSettings();
@@ -73,11 +69,11 @@ export default function AlarmRingingPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Set up timeout (15 minutes)
+  // Set up timeout (20 minutes)
   useEffect(() => {
     timeoutRef.current = setTimeout(() => {
       handleTimeout();
-    }, MAX_ALARM_RING_DURATION_MINUTES * 60 * 1000);
+    }, MAX_RING_DURATION_MS);
 
     return () => {
       if (timeoutRef.current) {
@@ -112,15 +108,6 @@ export default function AlarmRingingPage() {
     setState(STATES.QUESTIONING);
   }, [loadQuestions, requiredCorrect]);
 
-  // Handle swipe to snooze
-  const handleSnoozeSwipe = useCallback(async () => {
-    await loadQuestions(1);
-    setCurrentQuestionIndex(0);
-    setCorrectCount(0);
-    setWrongCount(0);
-    setState(STATES.SNOOZE_QUESTION);
-  }, [loadQuestions]);
-
   // Handle answer
   const handleAnswer = useCallback((isCorrect) => {
     answerQuestion(isCorrect);
@@ -130,11 +117,7 @@ export default function AlarmRingingPage() {
       setCorrectCount(newCorrectCount);
 
       // Check if we've reached the required correct answers
-      if (state === STATES.SNOOZE_QUESTION) {
-        // Snooze mode - one correct answer triggers snooze
-        handleSnoozeConfirm();
-      } else if (newCorrectCount >= requiredCorrect) {
-        // Regular mode - reached target
+      if (newCorrectCount >= requiredCorrect) {
         handleSuccess();
       } else {
         // Move to next question
@@ -152,7 +135,7 @@ export default function AlarmRingingPage() {
         setCurrentQuestionIndex(prev => prev + 1);
       }
     }
-  }, [correctCount, wrongCount, requiredCorrect, state, answerQuestion]);
+  }, [correctCount, wrongCount, requiredCorrect, answerQuestion]);
 
   // Handle success
   const handleSuccess = useCallback(async () => {
@@ -190,18 +173,6 @@ export default function AlarmRingingPage() {
     handleFailure('timeout');
   }, [handleFailure]);
 
-  // Handle snooze confirm
-  const handleSnoozeConfirm = useCallback(async () => {
-    clearTimeout(timeoutRef.current);
-    await snooze();
-    setState(STATES.SNOOZED);
-
-    // Navigate back to home after brief delay
-    setTimeout(() => {
-      navigate('/', { replace: true });
-    }, 1500);
-  }, [snooze, navigate]);
-
   // Handle kill switch
   const handleKillSwitch = useCallback(async () => {
     clearTimeout(timeoutRef.current);
@@ -224,9 +195,7 @@ export default function AlarmRingingPage() {
         <>
           <SwipeToStart
             currentTime={currentTime}
-            snoozesRemaining={snoozesRemaining}
             onDismiss={handleDismiss}
-            onSnooze={handleSnoozeSwipe}
             onKillSwitch={() => setShowKillSwitch(true)}
           />
           <KillSwitchModal
@@ -238,14 +207,13 @@ export default function AlarmRingingPage() {
       );
 
     case STATES.QUESTIONING:
-    case STATES.SNOOZE_QUESTION:
       return (
         <>
           <QuestionCard
             question={currentQuestion}
             progress={{
               correct: correctCount,
-              required: state === STATES.SNOOZE_QUESTION ? 1 : requiredCorrect,
+              required: requiredCorrect,
               wrong: wrongCount
             }}
             onAnswer={handleAnswer}
@@ -275,19 +243,6 @@ export default function AlarmRingingPage() {
           stats={sessionStats}
           onClose={handleClose}
         />
-      );
-
-    case STATES.SNOOZED:
-      return (
-        <div className="fixed inset-0 bg-gradient-to-b from-blue-900 to-indigo-900 flex flex-col items-center justify-center px-6">
-          <div className="w-24 h-24 rounded-full bg-blue-500/20 flex items-center justify-center mb-6">
-            <svg className="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Snoozed</h1>
-          <p className="text-blue-200">See you in 5 minutes...</p>
-        </div>
       );
 
     default:

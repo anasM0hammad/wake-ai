@@ -32,49 +32,26 @@ export function parseTime(timeString) {
 
 /**
  * Get the next Date when alarm should fire
+ * Always treats alarm as one-time: today if time hasn't passed, otherwise tomorrow
  * @param {string} time - Time in HH:MM format
- * @param {number[]} days - Array of days (0=Sunday, 1=Monday, etc.). Empty array means daily/one-time
  * @returns {Date} Next alarm date
  */
-export function getNextAlarmDate(time, days = []) {
+export function getNextAlarmDate(time) {
   const { hours, minutes } = parseTime(time);
   const now = new Date();
-  const today = now.getDay();
 
   // Create a date for today with the alarm time
   const alarmToday = new Date(now);
   alarmToday.setHours(hours, minutes, 0, 0);
 
-  // If no specific days, treat as one-time/daily alarm
-  if (!days || days.length === 0) {
-    // If alarm time has passed today, schedule for tomorrow
-    if (alarmToday > now) {
-      return alarmToday;
-    }
-    const tomorrow = new Date(alarmToday);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow;
+  // If alarm time has passed today, schedule for tomorrow
+  if (alarmToday > now) {
+    return alarmToday;
   }
 
-  // Find the next matching day
-  for (let i = 0; i < 7; i++) {
-    const checkDay = (today + i) % 7;
-    if (days.includes(checkDay)) {
-      const alarmDate = new Date(now);
-      alarmDate.setDate(now.getDate() + i);
-      alarmDate.setHours(hours, minutes, 0, 0);
-
-      // If it's today but time has passed, continue to next occurrence
-      if (alarmDate > now) {
-        return alarmDate;
-      }
-    }
-  }
-
-  // Fallback: next week same day
-  const nextWeek = new Date(alarmToday);
-  nextWeek.setDate(nextWeek.getDate() + 7);
-  return nextWeek;
+  const tomorrow = new Date(alarmToday);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow;
 }
 
 /**

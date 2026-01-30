@@ -35,7 +35,7 @@ export async function checkAndPreloadQuestions() {
     return { skipped: true, reason: 'no_active_alarm' };
   }
 
-  const alarmDate = getNextAlarmDate(alarm.time, alarm.days);
+  const alarmDate = getNextAlarmDate(alarm.time);
   const msUntilAlarm = getMsUntilTime(alarmDate);
 
   if (!isPreloadNeeded(msUntilAlarm)) {

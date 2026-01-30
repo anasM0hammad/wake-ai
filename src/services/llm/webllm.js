@@ -1,8 +1,9 @@
 import * as webllm from '@mlc-ai/web-llm';
+import { MODEL_CONFIG } from '../../utils/constants';
 
 export const MODEL_OPTIONS = {
-  small: 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC',
-  large: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC'
+  small: MODEL_CONFIG.SMALL.id,
+  large: MODEL_CONFIG.LARGE.id
 };
 
 export const MODEL_STATUS = {
@@ -47,10 +48,35 @@ class WebLLMService {
     this._notifyListeners();
   }
 
-  async initializeModel(modelSize = 'small') {
-    const modelId = MODEL_OPTIONS[modelSize] || MODEL_OPTIONS.small;
-
+  async getRecommendedModel() {
     try {
+      // Check device RAM
+      let ramMB = 0;
+
+      if (typeof navigator !== 'undefined' && 'deviceMemory' in navigator) {
+        // deviceMemory returns GB, convert to MB
+        ramMB = navigator.deviceMemory * 1024;
+      }
+
+      // If we can detect RAM and it's >= 6GB, use large model
+      if (ramMB >= MODEL_CONFIG.LARGE.ramThreshold) {
+        return MODEL_OPTIONS.large;
+      }
+
+      // Default to small model for safety
+      return MODEL_OPTIONS.small;
+    } catch (error) {
+      console.error('Error detecting device RAM:', error);
+      // Default to small model if any uncertainty
+      return MODEL_OPTIONS.small;
+    }
+  }
+
+  async initializeModel() {
+    try {
+      // Auto-detect and use recommended model
+      const modelId = await this.getRecommendedModel();
+
       this._updateStatus(MODEL_STATUS.DOWNLOADING, { progress: 0, status: 'Starting download...' });
 
       this.engine = new webllm.MLCEngine();
@@ -147,8 +173,12 @@ class WebLLMService {
 // Singleton instance
 const webLLMService = new WebLLMService();
 
-export function initializeModel(modelSize) {
-  return webLLMService.initializeModel(modelSize);
+export function initializeModel() {
+  return webLLMService.initializeModel();
+}
+
+export function getRecommendedModel() {
+  return webLLMService.getRecommendedModel();
 }
 
 export function isModelReady() {
