@@ -33,12 +33,12 @@ export default function Toggle({
       {(label || description) && (
         <div className="flex-1 mr-4">
           {label && (
-            <span className="text-gray-900 dark:text-white font-medium">
+            <span className="text-white font-medium">
               {label}
             </span>
           )}
           {description && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            <p className="text-sm text-neutral-400 mt-0.5">
               {description}
             </p>
           )}
@@ -55,9 +55,9 @@ export default function Toggle({
         className={`
           relative inline-flex shrink-0 cursor-pointer rounded-full
           transition-colors duration-200 ease-in-out
-          focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+          focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-[#0a0a0a]
           ${sizeConfig.track}
-          ${checked ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'}
+          ${checked ? 'bg-indigo-600' : 'bg-[#404040]'}
           ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >

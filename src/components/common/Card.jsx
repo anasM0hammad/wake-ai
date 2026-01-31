@@ -16,19 +16,11 @@ export default function Card({
     lg: 'p-6'
   };
 
-  const shadowClasses = {
-    none: '',
-    sm: 'shadow-sm',
-    md: 'shadow-md',
-    lg: 'shadow-lg'
-  };
-
   const classes = [
-    'bg-white dark:bg-gray-900 rounded-2xl',
+    'bg-[#171717] rounded-2xl',
     paddingClasses[padding],
-    shadowClasses[shadow],
-    border ? 'border border-gray-100 dark:border-gray-800' : '',
-    onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : '',
+    border ? 'border border-[#262626]' : '',
+    onClick ? 'cursor-pointer hover:bg-[#1f1f1f] transition-colors' : '',
     className
   ].join(' ');
 
@@ -37,12 +29,12 @@ export default function Card({
       {(title || subtitle) && (
         <div className={padding !== 'none' ? 'mb-4' : 'p-4 pb-0'}>
           {title && (
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-lg font-semibold text-white">
               {title}
             </h3>
           )}
           {subtitle && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-neutral-400 mt-1">
               {subtitle}
             </p>
           )}

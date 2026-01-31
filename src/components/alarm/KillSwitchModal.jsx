@@ -91,13 +91,13 @@ export default function KillSwitchModal({ isOpen, onClose, onSuccess }) {
       />
 
       {/* Modal */}
-      <div className={`relative w-full max-w-sm mx-4 bg-gray-900 rounded-2xl overflow-hidden ${isShaking ? 'animate-shake' : ''}`}>
+      <div className={`relative w-full max-w-sm mx-4 bg-[#171717] rounded-2xl overflow-hidden border border-[#262626] ${isShaking ? 'animate-shake' : ''}`}>
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-[#262626] flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Kill Switch</h2>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-white transition-colors"
+            className="p-2 text-neutral-400 hover:text-white transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -107,21 +107,21 @@ export default function KillSwitchModal({ isOpen, onClose, onSuccess }) {
 
         {/* Content */}
         <div className="px-6 py-6">
-          <p className="text-gray-400 text-center mb-6">
+          <p className="text-neutral-400 text-center mb-6">
             Enter your 4-digit code
           </p>
 
-          {/* Code display */}
-          <div className={`flex justify-center gap-3 mb-6 ${isShaking ? 'animate-shake' : ''}`}>
+          {/* Code display - improved design */}
+          <div className={`flex justify-center items-center gap-4 py-6 ${isShaking ? 'animate-shake' : ''}`}>
             {code.map((digit, index) => (
               <div
                 key={index}
-                className={`w-14 h-16 rounded-xl border-2 flex items-center justify-center text-2xl font-bold ${
+                className={`w-16 h-16 rounded-2xl border-2 flex items-center justify-center text-3xl font-bold transition-all ${
                   error
-                    ? 'border-red-500 bg-red-500/10 text-red-400'
+                    ? 'border-red-500 bg-red-900/20 text-red-400'
                     : digit
-                    ? 'border-indigo-500 bg-indigo-500/10 text-white'
-                    : 'border-gray-700 bg-gray-800 text-gray-400'
+                    ? 'border-indigo-500 bg-indigo-900/20 text-white'
+                    : 'border-[#333333] bg-[#171717] text-neutral-500'
                 }`}
               >
                 {digit ? '•' : ''}
@@ -142,7 +142,7 @@ export default function KillSwitchModal({ isOpen, onClose, onSuccess }) {
               <button
                 key={num}
                 onClick={() => handleDigitPress(num.toString())}
-                className="h-16 rounded-xl bg-gray-800 text-white text-2xl font-semibold hover:bg-gray-700 active:bg-gray-600 transition-colors"
+                className="h-16 rounded-xl bg-[#262626] text-white text-2xl font-semibold hover:bg-[#333333] active:bg-[#404040] transition-colors"
               >
                 {num}
               </button>
@@ -150,13 +150,13 @@ export default function KillSwitchModal({ isOpen, onClose, onSuccess }) {
             <div /> {/* Empty space */}
             <button
               onClick={() => handleDigitPress('0')}
-              className="h-16 rounded-xl bg-gray-800 text-white text-2xl font-semibold hover:bg-gray-700 active:bg-gray-600 transition-colors"
+              className="h-16 rounded-xl bg-[#262626] text-white text-2xl font-semibold hover:bg-[#333333] active:bg-[#404040] transition-colors"
             >
               0
             </button>
             <button
               onClick={handleBackspace}
-              className="h-16 rounded-xl bg-gray-800 text-gray-400 hover:bg-gray-700 active:bg-gray-600 transition-colors flex items-center justify-center"
+              className="h-16 rounded-xl bg-[#262626] text-neutral-400 hover:bg-[#333333] active:bg-[#404040] transition-colors flex items-center justify-center"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />

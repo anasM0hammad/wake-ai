@@ -9,8 +9,25 @@
   line-height: 1.5;
   font-weight: 400;
 
-  /* Color scheme */
-  color-scheme: light dark;
+  /* Color scheme - Dark theme */
+  color-scheme: dark;
+
+  /* Dark theme colors */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #171717;
+  --bg-tertiary: #262626;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --accent-primary: #6366f1;
+  --accent-hover: #4f46e5;
+  --success: #22c55e;
+  --warning: #eab308;
+  --danger: #ef4444;
+  --border: #262626;
+  --input-bg: #171717;
+  --input-border: #333333;
+  --input-focus: #6366f1;
 
   /* Smooth scrolling */
   scroll-behavior: smooth;
@@ -38,8 +55,8 @@ body {
   min-width: 320px;
   min-height: 100vh;
   min-height: 100dvh; /* Dynamic viewport height for mobile */
-  background-color: #f9fafb;
-  color: #111827;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 
   /* Prevent overscroll/bounce on iOS */
   overscroll-behavior: none;
@@ -47,13 +64,6 @@ body {
   /* Smooth font rendering */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* Dark mode body */
-.dark body,
-body.dark {
-  background-color: #09090b;
-  color: #fafafa;
 }
 
 #root {
@@ -202,7 +212,7 @@ button,
 /* ===== FOCUS STYLES ===== */
 /* Better focus indicators for accessibility */
 :focus-visible {
-  outline: 2px solid #0d9488;
+  outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
 }
 

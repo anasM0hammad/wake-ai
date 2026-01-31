@@ -84,12 +84,12 @@ export default function PremiumUpsell({ isOpen, onClose, feature, onUpgrade }) {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md mx-4 mb-4 sm:mb-0 bg-white rounded-2xl shadow-xl overflow-hidden animate-slide-up">
+      <div className="relative w-full max-w-md mx-4 mb-4 sm:mb-0 bg-[#171717] rounded-2xl shadow-xl overflow-hidden animate-slide-up border border-[#262626]">
         {/* Header */}
         <div className="relative bg-gradient-to-br from-indigo-600 to-purple-600 px-6 py-8 text-center text-white">
           <button
@@ -120,12 +120,12 @@ export default function PremiumUpsell({ isOpen, onClose, feature, onUpgrade }) {
           <div className="space-y-4">
             {PREMIUM_FEATURES.map((item, index) => (
               <div key={index} className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-indigo-900/50 text-indigo-400 flex items-center justify-center flex-shrink-0">
                   {item.icon}
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">{item.title}</h4>
-                  <p className="text-sm text-gray-600">{item.description}</p>
+                  <h4 className="font-semibold text-white">{item.title}</h4>
+                  <p className="text-sm text-neutral-400">{item.description}</p>
                 </div>
               </div>
             ))}
@@ -133,13 +133,13 @@ export default function PremiumUpsell({ isOpen, onClose, feature, onUpgrade }) {
         </div>
 
         {/* Pricing */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+        <div className="px-6 py-4 bg-[#0a0a0a] border-t border-[#262626]">
           <div className="text-center mb-4">
             <div className="flex items-baseline justify-center gap-1">
-              <span className="text-3xl font-bold text-gray-900">$4.99</span>
-              <span className="text-gray-500">/month</span>
+              <span className="text-3xl font-bold text-white">$4.99</span>
+              <span className="text-neutral-500">/month</span>
             </div>
-            <p className="text-sm text-gray-500 mt-1">or $29.99/year (save 50%)</p>
+            <p className="text-sm text-neutral-500 mt-1">or $29.99/year (save 50%)</p>
           </div>
 
           <button
@@ -151,7 +151,7 @@ export default function PremiumUpsell({ isOpen, onClose, feature, onUpgrade }) {
 
           <button
             onClick={onClose}
-            className="w-full py-3 mt-2 text-gray-600 font-medium hover:text-gray-900 transition-colors"
+            className="w-full py-3 mt-2 text-neutral-400 font-medium hover:text-white transition-colors"
           >
             Maybe Later
           </button>
