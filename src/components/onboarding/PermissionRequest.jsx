@@ -34,14 +34,14 @@ export default function PermissionRequest({ onNext, onBack }) {
   const isDenied = permissionStatus === 'denied';
 
   return (
-    <div className="flex flex-col min-h-full px-6 py-8 bg-[#0a0a0a]">
+    <div className="flex flex-col min-h-full px-6 py-8 bg-[#09090B]">
       <div className="flex-1">
         <div className="mb-8 text-center">
           <div className={`w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center ${
-            isGranted ? 'bg-green-900/50' : isDenied ? 'bg-red-900/50' : 'bg-indigo-900/50'
+            isGranted ? 'bg-emerald-900/50' : isDenied ? 'bg-red-900/50' : 'bg-sky-900/50'
           }`}>
             {isGranted ? (
-              <svg className="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-10 h-10 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             ) : isDenied ? (
@@ -49,7 +49,7 @@ export default function PermissionRequest({ onNext, onBack }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             ) : (
-              <svg className="w-10 h-10 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-10 h-10 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
             )}
@@ -60,22 +60,22 @@ export default function PermissionRequest({ onNext, onBack }) {
           </h2>
 
           {isGranted ? (
-            <p className="text-neutral-400 max-w-sm mx-auto">
+            <p className="text-zinc-400 max-w-sm mx-auto">
               Your alarms will ring even when the app is in the background.
             </p>
           ) : isDenied ? (
-            <p className="text-neutral-400 max-w-sm mx-auto">
+            <p className="text-zinc-400 max-w-sm mx-auto">
               Notifications are blocked. You'll need to enable them in your device settings for alarms to work properly.
             </p>
           ) : (
-            <p className="text-neutral-400 max-w-sm mx-auto">
+            <p className="text-zinc-400 max-w-sm mx-auto">
               WakeAI needs notification permission to wake you up, even when your phone is locked.
             </p>
           )}
         </div>
 
         {!isGranted && (
-          <div className="bg-amber-900/30 border border-amber-700/50 rounded-xl p-4 mb-6">
+          <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl p-4 mb-6">
             <div className="flex gap-3">
               <svg className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -93,7 +93,7 @@ export default function PermissionRequest({ onNext, onBack }) {
         {isDenied && (
           <button
             onClick={openSettings}
-            className="w-full py-3 px-4 bg-[#262626] text-neutral-300 font-medium rounded-xl hover:bg-[#333333] transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 px-4 bg-zinc-800 text-zinc-300 font-medium rounded-xl hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -109,7 +109,7 @@ export default function PermissionRequest({ onNext, onBack }) {
           <button
             onClick={handleRequestPermission}
             disabled={isRequesting || permissionStatus === 'checking'}
-            className="w-full py-4 px-6 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 active:bg-indigo-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-4 px-6 bg-sky-500 text-white font-semibold rounded-xl hover:bg-sky-600 active:bg-sky-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isRequesting ? 'Requesting...' : 'Allow Notifications'}
           </button>
@@ -118,7 +118,7 @@ export default function PermissionRequest({ onNext, onBack }) {
         {isGranted && (
           <button
             onClick={onNext}
-            className="w-full py-4 px-6 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 active:bg-indigo-800 transition-colors"
+            className="w-full py-4 px-6 bg-sky-500 text-white font-semibold rounded-xl hover:bg-sky-600 active:bg-sky-700 transition-colors"
           >
             Continue
           </button>
@@ -127,7 +127,7 @@ export default function PermissionRequest({ onNext, onBack }) {
         {isDenied && (
           <button
             onClick={onNext}
-            className="w-full py-4 px-6 bg-[#262626] text-neutral-300 font-semibold rounded-xl hover:bg-[#333333] transition-colors"
+            className="w-full py-4 px-6 bg-zinc-800 text-zinc-300 font-semibold rounded-xl hover:bg-zinc-700 transition-colors"
           >
             Continue Anyway
           </button>
@@ -135,7 +135,7 @@ export default function PermissionRequest({ onNext, onBack }) {
 
         <button
           onClick={onBack}
-          className="w-full py-3 px-6 text-neutral-400 font-medium hover:text-white transition-colors"
+          className="w-full py-3 px-6 text-zinc-400 font-medium hover:text-white transition-colors"
         >
           Back
         </button>

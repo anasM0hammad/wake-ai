@@ -12,22 +12,30 @@
   /* Color scheme - Dark theme */
   color-scheme: dark;
 
-  /* Dark theme colors */
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #171717;
-  --bg-tertiary: #262626;
-  --text-primary: #ffffff;
-  --text-secondary: #a1a1aa;
-  --text-tertiary: #71717a;
-  --accent-primary: #6366f1;
-  --accent-hover: #4f46e5;
-  --success: #22c55e;
-  --warning: #eab308;
-  --danger: #ef4444;
-  --border: #262626;
-  --input-bg: #171717;
-  --input-border: #333333;
-  --input-focus: #6366f1;
+  /* Premium Dark theme colors - Sky/Cyan + Amber/Gold palette */
+  --bg-primary: #09090B;
+  --bg-card: #18181B;
+  --bg-elevated: #27272A;
+  --bg-secondary: #18181B;
+  --bg-tertiary: #27272A;
+  --text-primary: #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
+  --text-tertiary: #71717A;
+  --accent-primary: #0EA5E9;
+  --accent-hover: #0284C7;
+  --accent-glow: rgba(14, 165, 233, 0.2);
+  --accent-secondary: #F59E0B;
+  --accent-secondary-subtle: rgba(245, 158, 11, 0.15);
+  --border-subtle: #3F3F46;
+  --border-accent: rgba(14, 165, 233, 0.3);
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --border: #3F3F46;
+  --input-bg: #18181B;
+  --input-border: #3F3F46;
+  --input-focus: #0EA5E9;
 
   /* Smooth scrolling */
   scroll-behavior: smooth;
