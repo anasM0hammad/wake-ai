@@ -1,18 +1,44 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLLM } from '../../hooks/useLLM';
 import { updateSettings } from '../../services/storage/settingsStorage';
+import { addProgressListener } from '../../services/llm/webllm';
 
 export default function ModelDownload({ onNext, onBack }) {
   const [isStarting, setIsStarting] = useState(false);
+  const [localProgress, setLocalProgress] = useState({ progress: 0, status: 'Preparing...' });
 
   const { loadingProgress, initializeModel, isReady, isLoading, hasError, error } = useLLM();
 
-  const handleDownload = async () => {
+  // Subscribe to progress updates directly from the service
+  useEffect(() => {
+    const unsubscribe = addProgressListener((state) => {
+      if (state.progress) {
+        setLocalProgress({
+          progress: state.progress.progress || 0,
+          status: state.progress.status || 'Loading...'
+        });
+      }
+    });
+    return unsubscribe;
+  }, []);
+
+  // Sync with hook's loading progress
+  useEffect(() => {
+    if (loadingProgress && (loadingProgress.progress !== undefined)) {
+      setLocalProgress({
+        progress: loadingProgress.progress || 0,
+        status: loadingProgress.status || 'Loading...'
+      });
+    }
+  }, [loadingProgress]);
+
+  const handleDownload = useCallback(async () => {
     setIsStarting(true);
+    setLocalProgress({ progress: 0, status: 'Starting download...' });
     // Model is automatically selected based on device capabilities
     await initializeModel();
     setIsStarting(false);
-  };
+  }, [initializeModel]);
 
   const handleSkip = () => {
     // Mark that model is not downloaded but continue
@@ -24,13 +50,6 @@ export default function ModelDownload({ onNext, onBack }) {
     updateSettings({ modelDownloaded: true });
     onNext();
   };
-
-  // Auto-start download when starting is triggered
-  useEffect(() => {
-    if (isStarting && !isLoading && !isReady && !hasError) {
-      // Download already started via handleDownload
-    }
-  }, [isStarting, isLoading, isReady, hasError]);
 
   // Download complete
   if (isReady) {
@@ -61,7 +80,8 @@ export default function ModelDownload({ onNext, onBack }) {
   }
 
   // Downloading
-  if (isLoading) {
+  if (isLoading || isStarting) {
+    const displayProgress = Math.min(100, Math.max(0, localProgress.progress));
     return (
       <div className="flex flex-col min-h-full px-6 py-8 bg-[#0a0a0a]">
         <div className="flex-1 flex flex-col items-center justify-center text-center">
@@ -72,17 +92,17 @@ export default function ModelDownload({ onNext, onBack }) {
           </div>
           <h2 className="text-2xl font-bold text-white mb-3">Downloading AI Model</h2>
           <p className="text-neutral-400 max-w-sm mx-auto mb-6">
-            {loadingProgress.status || 'Preparing download...'}
+            {localProgress.status || 'Preparing download...'}
           </p>
 
           <div className="w-full max-w-sm">
             <div className="h-3 bg-[#262626] rounded-full overflow-hidden">
               <div
-                className="h-full bg-indigo-600 rounded-full transition-all duration-300"
-                style={{ width: `${loadingProgress.progress}%` }}
+                className="h-full bg-indigo-600 rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${displayProgress}%` }}
               />
             </div>
-            <p className="mt-2 text-sm text-neutral-500">{loadingProgress.progress}%</p>
+            <p className="mt-2 text-lg font-bold text-white">{displayProgress}%</p>
           </div>
         </div>
 

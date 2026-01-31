@@ -25,22 +25,36 @@ class WebLLMService {
 
   addProgressListener(callback) {
     this.listeners.add(callback);
+    // Immediately notify new listener with current state
+    callback({
+      status: this.status,
+      progress: this.progress,
+      error: this.errorMessage
+    });
     return () => this.listeners.delete(callback);
   }
 
   _notifyListeners() {
     const state = {
       status: this.status,
-      progress: this.progress,
+      progress: { ...this.progress },
       error: this.errorMessage
     };
-    this.listeners.forEach(listener => listener(state));
+    // Use setTimeout to ensure React state updates trigger re-renders
+    this.listeners.forEach(listener => {
+      try {
+        listener(state);
+      } catch (e) {
+        console.error('Error in progress listener:', e);
+      }
+    });
   }
 
   _updateStatus(status, progress = null, error = null) {
     this.status = status;
     if (progress !== null) {
-      this.progress = progress;
+      // Create new object to ensure React detects the change
+      this.progress = { ...progress };
     }
     if (error !== null) {
       this.errorMessage = error;
@@ -79,26 +93,29 @@ class WebLLMService {
 
       this._updateStatus(MODEL_STATUS.DOWNLOADING, { progress: 0, status: 'Starting download...' });
 
+      // Create engine with progress callback set BEFORE loading
       this.engine = new webllm.MLCEngine();
 
-      await this.engine.reload(modelId, {
-        initProgressCallback: (report) => {
-          const progressPercent = Math.round(report.progress * 100);
-          let statusText = report.text || 'Loading...';
+      // Set progress callback before calling reload
+      this.engine.setInitProgressCallback((report) => {
+        // WebLLM progress is 0-1, convert to 0-100
+        const progressPercent = Math.round((report.progress || 0) * 100);
+        const statusText = report.text || 'Downloading...';
 
-          if (report.progress < 1) {
-            this._updateStatus(
-              MODEL_STATUS.DOWNLOADING,
-              { progress: progressPercent, status: statusText }
-            );
-          } else {
-            this._updateStatus(
-              MODEL_STATUS.LOADING,
-              { progress: 100, status: 'Initializing model...' }
-            );
-          }
+        if (report.progress < 1) {
+          this._updateStatus(
+            MODEL_STATUS.DOWNLOADING,
+            { progress: progressPercent, status: statusText }
+          );
+        } else {
+          this._updateStatus(
+            MODEL_STATUS.LOADING,
+            { progress: 100, status: 'Initializing model...' }
+          );
         }
       });
+
+      await this.engine.reload(modelId);
 
       this._updateStatus(MODEL_STATUS.READY, { progress: 100, status: 'Model ready' });
       return true;
