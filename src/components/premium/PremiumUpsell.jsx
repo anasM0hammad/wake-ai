@@ -84,17 +84,17 @@ export default function PremiumUpsell({ isOpen, onClose, feature, onUpgrade }) {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md mx-4 mb-4 sm:mb-0 bg-zinc-900 rounded-2xl shadow-xl overflow-hidden animate-slide-up border border-zinc-800">
-        {/* Header - Premium Gold Gradient */}
-        <div className="relative bg-gradient-to-br from-amber-500 to-orange-600 px-6 py-8 text-center text-white">
+      <div className="relative w-full max-w-md mx-4 mb-4 sm:mb-0 bg-[#0C0C0C] rounded-2xl shadow-xl overflow-hidden animate-slide-up border border-[#1F1F1F]">
+        {/* Header - Gold Gradient */}
+        <div className="relative bg-gradient-to-br from-amber-600 to-amber-500 px-6 py-8 text-center text-white">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/20 transition-colors"
+            className="absolute top-4 right-4 p-2 rounded-full hover:bg-black/20 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -120,12 +120,12 @@ export default function PremiumUpsell({ isOpen, onClose, feature, onUpgrade }) {
           <div className="space-y-4">
             {PREMIUM_FEATURES.map((item, index) => (
               <div key={index} className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-amber-600/10 text-amber-500 flex items-center justify-center flex-shrink-0">
                   {item.icon}
                 </div>
                 <div>
                   <h4 className="font-semibold text-white">{item.title}</h4>
-                  <p className="text-sm text-zinc-400">{item.description}</p>
+                  <p className="text-sm text-[#737373]">{item.description}</p>
                 </div>
               </div>
             ))}
@@ -133,25 +133,25 @@ export default function PremiumUpsell({ isOpen, onClose, feature, onUpgrade }) {
         </div>
 
         {/* Pricing */}
-        <div className="px-6 py-4 bg-zinc-950 border-t border-zinc-800">
+        <div className="px-6 py-4 bg-[#050505] border-t border-[#1F1F1F]">
           <div className="text-center mb-4">
             <div className="flex items-baseline justify-center gap-1">
               <span className="text-3xl font-bold text-white">$4.99</span>
-              <span className="text-zinc-500">/month</span>
+              <span className="text-[#737373]">/month</span>
             </div>
-            <p className="text-sm text-zinc-500 mt-1">or $29.99/year (save 50%)</p>
+            <p className="text-sm text-[#737373] mt-1">or $29.99/year (save 50%)</p>
           </div>
 
           <button
             onClick={handleUpgrade}
-            className="w-full py-4 px-6 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl hover:from-amber-600 hover:to-orange-600 active:from-amber-700 active:to-orange-700 transition-all shadow-lg shadow-amber-500/25"
+            className="w-full py-4 px-6 bg-gradient-to-r from-amber-600 to-amber-500 text-white font-semibold rounded-xl hover:from-amber-700 hover:to-amber-600 active:from-amber-800 active:to-amber-700 transition-all shadow-lg shadow-amber-600/25"
           >
             Upgrade Now
           </button>
 
           <button
             onClick={onClose}
-            className="w-full py-3 mt-2 text-zinc-400 font-medium hover:text-white transition-colors"
+            className="w-full py-3 mt-2 text-[#737373] font-medium hover:text-white transition-colors"
           >
             Maybe Later
           </button>

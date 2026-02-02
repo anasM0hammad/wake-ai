@@ -111,7 +111,7 @@ export default function KillSwitchSetup({ onNext, onBack }) {
           onChange={e => handleCodeChange(index, e.target.value, isConfirm)}
           onKeyDown={e => handleKeyDown(index, e, isConfirm)}
           onPaste={e => handlePaste(e, isConfirm)}
-          className="w-16 h-16 bg-zinc-900 border-2 border-zinc-700 rounded-2xl text-3xl font-bold text-center text-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all"
+          className="w-16 h-16 bg-[#0A0A0A] border-2 border-[#262626] rounded-2xl text-3xl font-bold text-center text-white focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all"
         />
       ))}
     </div>
@@ -119,31 +119,31 @@ export default function KillSwitchSetup({ onNext, onBack }) {
 
   if (step === 'success') {
     return (
-      <div className="flex flex-col min-h-full px-6 py-8 bg-[#09090B]">
+      <div className="flex flex-col min-h-full px-6 py-8 bg-[#050505]">
         <div className="flex-1 flex flex-col items-center justify-center text-center">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-emerald-900/50 flex items-center justify-center">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-emerald-600/20 flex items-center justify-center">
             <svg className="w-10 h-10 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-white mb-3">Kill Switch Set!</h2>
-          <p className="text-zinc-400 max-w-sm mx-auto">
+          <p className="text-[#737373] max-w-sm mx-auto">
             Your emergency code is ready. Enter it anytime to instantly stop the alarm.
           </p>
           <div className="mt-6 flex justify-center gap-3">
             {code.map((digit, i) => (
-              <span key={i} className="w-12 h-14 flex items-center justify-center text-2xl font-bold bg-zinc-900 border-2 border-sky-500 text-white rounded-2xl">
+              <span key={i} className="w-12 h-14 flex items-center justify-center text-2xl font-bold bg-[#0A0A0A] border-2 border-red-600 text-white rounded-2xl">
                 {digit}
               </span>
             ))}
           </div>
-          <p className="mt-4 text-sm text-zinc-500">Remember this code!</p>
+          <p className="mt-4 text-sm text-[#737373]">Remember this code!</p>
         </div>
 
         <div className="space-y-3 pt-6">
           <button
             onClick={onNext}
-            className="w-full py-4 px-6 bg-sky-500 text-white font-semibold rounded-xl hover:bg-sky-600 active:bg-sky-700 transition-colors"
+            className="w-full py-4 px-6 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 active:bg-red-800 transition-colors"
           >
             Continue
           </button>
@@ -153,18 +153,18 @@ export default function KillSwitchSetup({ onNext, onBack }) {
   }
 
   return (
-    <div className="flex flex-col min-h-full px-6 py-8 bg-[#09090B]">
+    <div className="flex flex-col min-h-full px-6 py-8 bg-[#050505]">
       <div className="flex-1">
         <div className="mb-8 text-center">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-sky-900/50 flex items-center justify-center">
-            <svg className="w-10 h-10 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-600/10 flex items-center justify-center">
+            <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-white mb-3">
             {step === 'enter' ? 'Create Kill Switch' : 'Confirm Your Code'}
           </h2>
-          <p className="text-zinc-400 max-w-sm mx-auto">
+          <p className="text-[#737373] max-w-sm mx-auto">
             {step === 'enter'
               ? 'Set a 4-digit emergency code to instantly stop the alarm when needed.'
               : 'Enter your code again to confirm.'}
@@ -178,25 +178,25 @@ export default function KillSwitchSetup({ onNext, onBack }) {
         </div>
 
         {error && (
-          <div className="bg-red-900/50 border border-red-700 rounded-xl p-3 mb-6">
-            <p className="text-red-300 text-sm text-center">{error}</p>
+          <div className="bg-red-600/10 border border-red-600/30 rounded-xl p-3 mb-6">
+            <p className="text-red-400 text-sm text-center">{error}</p>
           </div>
         )}
 
         {step === 'enter' && (
-          <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+          <div className="bg-[#0C0C0C] rounded-xl p-4 border border-[#1F1F1F]">
             <h4 className="font-medium text-white mb-2">When to use the kill switch:</h4>
-            <ul className="space-y-1 text-sm text-zinc-400">
+            <ul className="space-y-1 text-sm text-[#737373]">
               <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full" />
+                <span className="w-1.5 h-1.5 bg-[#525252] rounded-full" />
                 Emergency situations
               </li>
               <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full" />
+                <span className="w-1.5 h-1.5 bg-[#525252] rounded-full" />
                 When you've already woken up another way
               </li>
               <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full" />
+                <span className="w-1.5 h-1.5 bg-[#525252] rounded-full" />
                 Technical issues with questions
               </li>
             </ul>
@@ -206,7 +206,7 @@ export default function KillSwitchSetup({ onNext, onBack }) {
         {step === 'confirm' && (
           <button
             onClick={handleReset}
-            className="w-full py-2 text-sky-400 font-medium text-sm hover:text-sky-300 transition-colors"
+            className="w-full py-2 text-red-500 font-medium text-sm hover:text-red-400 transition-colors"
           >
             Start over with a different code
           </button>
@@ -217,13 +217,13 @@ export default function KillSwitchSetup({ onNext, onBack }) {
         <button
           onClick={handleContinue}
           disabled={step === 'enter' ? code.some(d => !d) : confirmCode.some(d => !d)}
-          className="w-full py-4 px-6 bg-sky-500 text-white font-semibold rounded-xl hover:bg-sky-600 active:bg-sky-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-4 px-6 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 active:bg-red-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {step === 'enter' ? 'Continue' : 'Confirm Code'}
         </button>
         <button
           onClick={onBack}
-          className="w-full py-3 px-6 text-zinc-400 font-medium hover:text-white transition-colors"
+          className="w-full py-3 px-6 text-[#737373] font-medium hover:text-white transition-colors"
         >
           Back
         </button>

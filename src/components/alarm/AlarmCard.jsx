@@ -39,7 +39,7 @@ export default function AlarmCard({
             {/* Time until & difficulty */}
             <div className="flex items-center gap-3 mt-2">
               {alarm.enabled && (
-                <span className="text-xs text-indigo-400 bg-indigo-900/50 px-2 py-1 rounded-full">
+                <span className="text-xs text-red-400 bg-red-600/20 px-2 py-1 rounded-full">
                   in {timeUntil}
                 </span>
               )}
@@ -61,7 +61,7 @@ export default function AlarmCard({
                 onToggle?.(alarm.id);
               }}
               className={`relative w-14 h-8 rounded-full transition-colors ${
-                alarm.enabled ? 'bg-indigo-600' : 'bg-[#404040]'
+                alarm.enabled ? 'bg-red-600' : 'bg-[#404040]'
               }`}
             >
               <span

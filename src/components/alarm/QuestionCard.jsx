@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
 const CATEGORY_COLORS = {
-  math: { bg: 'bg-blue-100', text: 'text-blue-700' },
-  patterns: { bg: 'bg-purple-100', text: 'text-purple-700' },
-  general: { bg: 'bg-green-100', text: 'text-green-700' },
-  logic: { bg: 'bg-amber-100', text: 'text-amber-700' }
+  math: { bg: 'bg-red-600/10', text: 'text-red-400' },
+  patterns: { bg: 'bg-red-600/10', text: 'text-red-400' },
+  general: { bg: 'bg-red-600/10', text: 'text-red-400' },
+  logic: { bg: 'bg-red-600/10', text: 'text-red-400' }
 };
 
 export default function QuestionCard({
@@ -19,8 +19,8 @@ export default function QuestionCard({
 
   if (!question) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-b from-indigo-900 to-purple-900 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+      <div className="fixed inset-0 bg-[#050505] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[#262626] border-t-red-600 rounded-full animate-spin" />
       </div>
     );
   }
@@ -49,20 +49,20 @@ export default function QuestionCard({
   const getOptionStyle = (index) => {
     if (showFeedback && selectedIndex === index) {
       if (showFeedback === 'correct') {
-        return 'bg-green-500 border-green-500 text-white scale-105';
+        return 'bg-emerald-500 border-emerald-500 text-white scale-105';
       }
       return 'bg-red-500 border-red-500 text-white animate-shake';
     }
 
     if (showFeedback === 'wrong' && index === question.correctIndex) {
-      return 'bg-green-500/20 border-green-500 text-green-100';
+      return 'bg-emerald-500/20 border-emerald-500 text-emerald-100';
     }
 
-    return 'bg-white/10 border-white/20 text-white hover:bg-white/20 active:bg-white/30';
+    return 'bg-[#141414] border-[#262626] text-white hover:bg-[#1F1F1F] hover:border-[#333333]';
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-indigo-900 via-purple-900 to-indigo-900 flex flex-col">
+    <div className="fixed inset-0 bg-[#050505] flex flex-col">
       {/* Header */}
       <div className="px-6 pt-6 pb-4 flex items-center justify-between">
         {/* Category */}
@@ -73,7 +73,7 @@ export default function QuestionCard({
         {/* Kill switch */}
         <button
           onClick={onKillSwitch}
-          className="p-2 text-white/30 hover:text-white/60 transition-colors"
+          className="p-2 text-[#525252] hover:text-[#737373] transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -83,13 +83,13 @@ export default function QuestionCard({
 
       {/* Progress */}
       <div className="px-6 mb-6">
-        <div className="flex items-center justify-between text-sm text-white/60 mb-2">
+        <div className="flex items-center justify-between text-sm text-[#737373] mb-2">
           <span>{progress.correct} of {progress.required} correct</span>
           <span>{progress.wrong} wrong</span>
         </div>
-        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+        <div className="h-2 bg-[#141414] rounded-full overflow-hidden">
           <div
-            className="h-full bg-green-500 rounded-full transition-all duration-300"
+            className="h-full bg-red-600 rounded-full transition-all duration-300"
             style={{ width: `${(progress.correct / progress.required) * 100}%` }}
           />
         </div>
@@ -113,7 +113,7 @@ export default function QuestionCard({
               className={`w-full py-4 px-6 rounded-xl border-2 font-medium text-lg transition-all duration-200 ${getOptionStyle(index)}`}
             >
               <span className="inline-flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold">
+                <span className="w-8 h-8 rounded-full bg-[#0A0A0A] border border-[#262626] flex items-center justify-center text-sm font-bold">
                   {String.fromCharCode(65 + index)}
                 </span>
                 {option}

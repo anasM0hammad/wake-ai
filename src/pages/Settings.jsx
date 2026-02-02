@@ -144,22 +144,22 @@ export default function Settings() {
           value={digit}
           onChange={(e) => handleKillCodeDigit(index, e.target.value, isConfirm)}
           onKeyDown={(e) => handleKillCodeKeyDown(index, e, isConfirm)}
-          className="w-16 h-16 bg-[#171717] border-2 border-[#333333] rounded-2xl text-3xl font-bold text-center text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+          className="w-16 h-16 bg-[#0A0A0A] border-2 border-[#262626] rounded-2xl text-3xl font-bold text-center text-white focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all"
         />
       ))}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-[#050505]">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-[#171717] border-b border-[#262626] safe-area-top">
+      <header className="sticky top-0 z-10 bg-[#050505] border-b border-[#1F1F1F] safe-area-top">
         <div className="flex items-center h-14 px-4">
           <button
             onClick={() => navigate('/')}
-            className="p-2 -ml-2 rounded-lg hover:bg-[#262626] transition-colors"
+            className="p-2 -ml-2 rounded-lg hover:bg-[#141414] transition-colors"
           >
-            <svg className="w-6 h-6 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-[#737373]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
@@ -170,7 +170,7 @@ export default function Settings() {
       <div className="p-4 space-y-6 pb-24">
         {/* Difficulty Mode */}
         <Card>
-          <h2 className="text-sm font-medium text-neutral-400 mb-3">
+          <h2 className="text-xs font-medium text-[#737373] uppercase tracking-wide mb-3">
             Difficulty Mode
           </h2>
           <div className="space-y-2">
@@ -184,10 +184,10 @@ export default function Settings() {
                   onClick={() => handleDifficultySelect(key)}
                   className={`w-full p-3 rounded-xl text-left transition-colors flex items-center justify-between ${
                     isSelected
-                      ? 'bg-indigo-900/30 border-2 border-indigo-500'
+                      ? 'bg-red-600/10 border-2 border-red-600/30'
                       : isLocked
-                      ? 'bg-[#1a1a1a] border-2 border-transparent opacity-60'
-                      : 'bg-[#1a1a1a] border-2 border-transparent hover:bg-[#262626]'
+                      ? 'bg-[#0A0A0A] border-2 border-transparent opacity-60'
+                      : 'bg-[#0A0A0A] border-2 border-transparent hover:bg-[#141414]'
                   }`}
                 >
                   <div>
@@ -196,7 +196,7 @@ export default function Settings() {
                         {mode.label}
                       </span>
                       {isLocked && (
-                        <span className="px-2 py-0.5 text-xs font-medium bg-amber-900/50 text-amber-400 rounded-full flex items-center gap-1">
+                        <span className="px-2 py-0.5 text-xs font-medium bg-amber-600/20 text-amber-500 rounded-full flex items-center gap-1">
                           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                           </svg>
@@ -204,12 +204,12 @@ export default function Settings() {
                         </span>
                       )}
                     </div>
-                    <div className="text-sm text-neutral-400">
+                    <div className="text-sm text-[#737373]">
                       {mode.questions} questions
                     </div>
                   </div>
                   {isSelected && (
-                    <svg className="w-5 h-5 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                   )}
@@ -221,11 +221,11 @@ export default function Settings() {
 
         {/* Question Categories */}
         <Card>
-          <h2 className="text-sm font-medium text-neutral-400 mb-3">
+          <h2 className="text-xs font-medium text-[#737373] uppercase tracking-wide mb-3">
             Question Categories
           </h2>
           {!isPremium && (
-            <p className="text-xs text-amber-400 mb-3">
+            <p className="text-xs text-amber-500 mb-3">
               Free users can select one category. Upgrade for multiple categories.
             </p>
           )}
@@ -236,7 +236,7 @@ export default function Settings() {
                   <div className="font-medium text-white">
                     {category.label}
                   </div>
-                  <div className="text-sm text-neutral-400">
+                  <div className="text-sm text-[#737373]">
                     {category.description}
                   </div>
                 </div>
@@ -251,7 +251,7 @@ export default function Settings() {
 
         {/* Alarm Tone */}
         <Card>
-          <h2 className="text-sm font-medium text-neutral-400 mb-3">
+          <h2 className="text-xs font-medium text-[#737373] uppercase tracking-wide mb-3">
             Alarm Tone
           </h2>
           <div className="space-y-2">
@@ -265,10 +265,10 @@ export default function Settings() {
                   onClick={() => handleToneSelect(key)}
                   className={`w-full p-3 rounded-xl text-left flex items-center justify-between transition-colors ${
                     isSelected
-                      ? 'bg-indigo-900/30 border-2 border-indigo-500'
+                      ? 'bg-red-600/10 border-2 border-red-600/30'
                       : isLocked
-                      ? 'bg-[#1a1a1a] border-2 border-transparent opacity-60'
-                      : 'bg-[#1a1a1a] border-2 border-transparent hover:bg-[#262626]'
+                      ? 'bg-[#0A0A0A] border-2 border-transparent opacity-60'
+                      : 'bg-[#0A0A0A] border-2 border-transparent hover:bg-[#141414]'
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -276,7 +276,7 @@ export default function Settings() {
                       {tone.label}
                     </span>
                     {isLocked && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-amber-900/50 text-amber-400 rounded-full flex items-center gap-1">
+                      <span className="px-2 py-0.5 text-xs font-medium bg-amber-600/20 text-amber-500 rounded-full flex items-center gap-1">
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                         </svg>
@@ -285,7 +285,7 @@ export default function Settings() {
                     )}
                   </div>
                   {isSelected && (
-                    <svg className="w-5 h-5 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                   )}
@@ -297,7 +297,7 @@ export default function Settings() {
 
         {/* Kill Switch */}
         <Card>
-          <h2 className="text-sm font-medium text-neutral-400 mb-3">
+          <h2 className="text-xs font-medium text-[#737373] uppercase tracking-wide mb-3">
             Kill Switch
           </h2>
           <div className="flex items-center justify-between">
@@ -305,7 +305,7 @@ export default function Settings() {
               <div className="font-medium text-white">
                 Emergency Code
               </div>
-              <div className="text-sm text-neutral-400">
+              <div className="text-sm text-[#737373]">
                 Current: {settings.killCode ? '****' : 'Not set'}
               </div>
             </div>
@@ -326,7 +326,7 @@ export default function Settings() {
               <div className="font-medium text-white">
                 Vibration
               </div>
-              <div className="text-sm text-neutral-400">
+              <div className="text-sm text-[#737373]">
                 Vibrate during alarm
               </div>
             </div>
@@ -355,7 +355,7 @@ export default function Settings() {
         onClose={() => setShowResetModal(false)}
         title="Reset Settings?"
       >
-        <p className="text-neutral-400 mb-6">
+        <p className="text-[#737373] mb-6">
           This will reset all settings to their defaults. This action cannot be undone.
         </p>
         <div className="flex gap-3">
@@ -382,7 +382,7 @@ export default function Settings() {
         onClose={handleCloseKillCodeModal}
         title={killCodeStep === 'enter' ? 'Set Kill Code' : 'Confirm Kill Code'}
       >
-        <p className="text-neutral-400 mb-2 text-center">
+        <p className="text-[#737373] mb-2 text-center">
           {killCodeStep === 'enter'
             ? 'Enter a new 4-digit emergency code.'
             : 'Enter your code again to confirm.'}
@@ -393,7 +393,7 @@ export default function Settings() {
           : renderKillCodeInputs(confirmKillCode, confirmInputRefs, true)}
 
         {killCodeError && (
-          <div className="bg-red-900/30 border border-red-700 rounded-xl p-3 mb-4">
+          <div className="bg-red-600/10 border border-red-600/30 rounded-xl p-3 mb-4">
             <p className="text-red-400 text-sm text-center">{killCodeError}</p>
           </div>
         )}

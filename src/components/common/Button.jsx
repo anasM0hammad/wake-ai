@@ -1,10 +1,10 @@
 const variants = {
-  primary: 'bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-indigo-800 disabled:opacity-50',
-  secondary: 'bg-[#262626] text-white hover:bg-[#333333] active:bg-[#404040]',
-  danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:bg-red-800 disabled:opacity-50',
-  success: 'bg-green-600 text-white hover:bg-green-700 active:bg-green-800 disabled:bg-green-800 disabled:opacity-50',
-  ghost: 'bg-transparent text-neutral-300 hover:bg-[#262626] hover:text-white',
-  outline: 'bg-transparent border-2 border-indigo-500 text-indigo-400 hover:bg-indigo-900/20'
+  primary: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:bg-red-800 disabled:opacity-50 shadow-lg shadow-red-600/20',
+  secondary: 'bg-[#141414] text-white hover:bg-[#1F1F1F] active:bg-[#262626] border border-[#262626]',
+  danger: 'bg-red-600/10 text-red-400 hover:bg-red-600/20 active:bg-red-600/30 border border-red-600/20',
+  success: 'bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-emerald-800 disabled:opacity-50',
+  ghost: 'bg-transparent text-[#737373] hover:bg-[#141414] hover:text-white',
+  outline: 'bg-transparent border-2 border-red-600 text-red-500 hover:bg-red-600/10'
 };
 
 const sizes = {
@@ -28,7 +28,7 @@ export default function Button({
   type = 'button',
   ...props
 }) {
-  const baseClasses = 'inline-flex items-center justify-center font-semibold rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-[#0a0a0a] disabled:cursor-not-allowed';
+  const baseClasses = 'inline-flex items-center justify-center font-semibold rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 focus:ring-offset-[#050505] disabled:cursor-not-allowed';
 
   const classes = [
     baseClasses,

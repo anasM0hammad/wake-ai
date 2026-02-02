@@ -35,21 +35,21 @@ export default function OnboardingFlow({ onComplete }) {
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0a0a0a]">
+    <div className="flex flex-col min-h-screen bg-[#050505]">
       {/* Progress indicator */}
       {!isFirstStep && (
         <div className="px-6 pt-4 pb-2">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-neutral-500">
+            <span className="text-sm text-[#737373]">
               Step {currentStep + 1} of {STEPS.length}
             </span>
-            <span className="text-sm font-medium text-indigo-400">
+            <span className="text-sm font-medium text-red-500">
               {STEPS[currentStep].title}
             </span>
           </div>
-          <div className="h-1.5 bg-[#262626] rounded-full overflow-hidden">
+          <div className="h-1.5 bg-[#1F1F1F] rounded-full overflow-hidden">
             <div
-              className="h-full bg-indigo-600 rounded-full transition-all duration-300"
+              className="h-full bg-red-600 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -64,10 +64,10 @@ export default function OnboardingFlow({ onComplete }) {
               key={step.id}
               className={`w-2 h-2 rounded-full transition-colors ${
                 index === currentStep
-                  ? 'bg-indigo-500'
+                  ? 'bg-red-600'
                   : index < currentStep
-                  ? 'bg-indigo-800'
-                  : 'bg-[#333333]'
+                  ? 'bg-red-900'
+                  : 'bg-[#262626]'
               }`}
             />
           ))}

@@ -38,7 +38,7 @@ export default function Toggle({
             </span>
           )}
           {description && (
-            <p className="text-sm text-neutral-400 mt-0.5">
+            <p className="text-sm text-[#737373] mt-0.5">
               {description}
             </p>
           )}
@@ -55,9 +55,9 @@ export default function Toggle({
         className={`
           relative inline-flex shrink-0 cursor-pointer rounded-full
           transition-colors duration-200 ease-in-out
-          focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-[#0a0a0a]
+          focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 focus:ring-offset-[#050505]
           ${sizeConfig.track}
-          ${checked ? 'bg-indigo-600' : 'bg-[#404040]'}
+          ${checked ? 'bg-red-600' : 'bg-[#262626]'}
           ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >

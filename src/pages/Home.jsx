@@ -89,7 +89,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#09090B] flex flex-col">
+    <div className="min-h-screen bg-[#050505] flex flex-col">
       {/* Header */}
       <header className="px-5 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -111,9 +111,9 @@ export default function Home() {
                 setLocalShowUpsell(true);
               }
             }}
-            className="relative w-10 h-10 bg-zinc-800/80 hover:bg-zinc-700/80 rounded-xl flex items-center justify-center transition-all border border-zinc-700/40"
+            className="relative w-10 h-10 bg-[#141414] hover:bg-[#1F1F1F] rounded-xl flex items-center justify-center transition-all border border-[#262626]"
           >
-            <svg className="w-[18px] h-[18px] text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="w-[18px] h-[18px] text-[#E5E5E5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="7" height="7" rx="1"/>
               <rect x="14" y="3" width="7" height="7" rx="1"/>
               <rect x="3" y="14" width="7" height="7" rx="1"/>
@@ -121,7 +121,7 @@ export default function Home() {
             </svg>
             {/* Lock badge for free users */}
             {!isPremium && (
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-600 rounded-full flex items-center justify-center">
                 <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C9.24 2 7 4.24 7 7v2H6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2h-1V7c0-2.76-2.24-5-5-5zm0 2c1.66 0 3 1.34 3 3v2H9V7c0-1.66 1.34-3 3-3z"/>
                 </svg>
@@ -132,9 +132,9 @@ export default function Home() {
           {/* Settings Button */}
           <button
             onClick={() => navigate('/settings')}
-            className="w-10 h-10 bg-zinc-800/80 hover:bg-zinc-700/80 rounded-xl flex items-center justify-center transition-all border border-zinc-700/40"
+            className="w-10 h-10 bg-[#141414] hover:bg-[#1F1F1F] rounded-xl flex items-center justify-center transition-all border border-[#262626]"
           >
-            <svg className="w-[18px] h-[18px] text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="w-[18px] h-[18px] text-[#737373] hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
               <circle cx="12" cy="12" r="3"/>
             </svg>
@@ -147,23 +147,23 @@ export default function Home() {
         {!isAlarmSet ? (
           /* No Alarm Set - Show Setup Prompt */
           <div className="flex-1 flex flex-col items-center justify-center py-12">
-            <div className="w-32 h-32 bg-gradient-to-br from-sky-500/20 to-cyan-500/20 rounded-full flex items-center justify-center mb-8 border border-sky-500/20">
-              <svg className="w-16 h-16 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <div className="w-32 h-32 bg-red-600/10 rounded-full flex items-center justify-center mb-8 border border-red-600/20">
+              <svg className="w-16 h-16 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"/>
                 <polyline points="12 6 12 12 16 14"/>
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">No Alarm Set</h2>
-            <p className="text-zinc-400 text-center mb-8 max-w-xs">Set your first alarm and wake up smarter with AI-powered questions</p>
+            <p className="text-[#737373] text-center mb-8 max-w-xs">Set your first alarm and wake up smarter with AI-powered questions</p>
             <button
               onClick={handleAddAlarm}
-              className="bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-lg shadow-sky-500/25 transition-all active:scale-95"
+              className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-lg shadow-red-600/20 transition-all active:scale-95"
             >
               Set Your Alarm
             </button>
 
             {/* AI Status - Subtle indicator */}
-            <div className="mt-8 flex items-center gap-2 text-zinc-500 text-sm">
+            <div className="mt-8 flex items-center gap-2 text-[#737373] text-sm">
               <div className={`w-2 h-2 rounded-full ${isModelReady ? 'bg-emerald-400' : 'bg-amber-400'}`} />
               <span>{isModelReady ? 'AI Ready' : 'Using Backup Mode'}</span>
             </div>
@@ -172,18 +172,18 @@ export default function Home() {
           /* Alarm Exists - Premium Design */
           <div className="flex-1 flex flex-col pt-6 pb-4">
             {/* Main Alarm Card */}
-            <div className="bg-zinc-900/80 backdrop-blur-xl rounded-3xl border border-zinc-800 overflow-hidden">
+            <div className="bg-[#0C0C0C] backdrop-blur-xl rounded-3xl border border-[#1F1F1F] overflow-hidden">
               {/* Status Bar */}
-              <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
+              <div className="px-6 py-4 border-b border-[#1F1F1F] flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2.5 h-2.5 rounded-full ${alarm.enabled ? 'bg-emerald-400 shadow-lg shadow-emerald-400/30' : 'bg-zinc-600'}`} />
-                  <span className={`text-sm font-medium ${alarm.enabled ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                  <div className={`w-2.5 h-2.5 rounded-full ${alarm.enabled ? 'bg-emerald-400 shadow-lg shadow-emerald-400/30' : 'bg-[#525252]'}`} />
+                  <span className={`text-sm font-medium ${alarm.enabled ? 'text-emerald-400' : 'text-[#525252]'}`}>
                     {alarm.enabled ? 'Active' : 'Disabled'}
                   </span>
                 </div>
                 <button
                   onClick={handleToggleAlarm}
-                  className={`relative w-12 h-7 rounded-full transition-all duration-300 ${alarm.enabled ? 'bg-emerald-500' : 'bg-zinc-700'}`}
+                  className={`relative w-12 h-7 rounded-full transition-all duration-300 ${alarm.enabled ? 'bg-emerald-500' : 'bg-[#262626]'}`}
                 >
                   <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-md transition-all duration-300 ${alarm.enabled ? 'left-6' : 'left-1'}`} />
                 </button>
@@ -195,7 +195,7 @@ export default function Home() {
                   {formatTimeDisplay(alarm.time, true)}
                 </div>
                 {alarm.enabled && timeUntil && (
-                  <p className="text-zinc-500 text-base">
+                  <p className="text-[#737373] text-base">
                     Rings {timeUntil}
                   </p>
                 )}
@@ -204,16 +204,16 @@ export default function Home() {
               {/* Mode and Category Row */}
               <div className="px-6 pb-6">
                 <div className="flex items-center justify-center gap-3">
-                  <div className="bg-sky-500/10 border border-sky-500/20 px-4 py-2 rounded-xl">
-                    <span className="text-sky-400 text-sm font-medium">
+                  <div className="bg-red-600/10 border border-red-600/20 px-4 py-2 rounded-xl">
+                    <span className="text-red-400 text-sm font-medium">
                       {difficultyInfo.name}
                     </span>
-                    <span className="text-sky-400/60 text-sm ml-1">
+                    <span className="text-red-400/60 text-sm ml-1">
                       · {difficultyInfo.questions}Q
                     </span>
                   </div>
-                  <div className="bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-xl">
-                    <span className="text-amber-400 text-sm font-medium capitalize">
+                  <div className="bg-[#141414] border border-[#262626] px-4 py-2 rounded-xl">
+                    <span className="text-white text-sm font-medium capitalize">
                       {settings?.selectedCategories?.[0] || 'Math'}
                     </span>
                   </div>
@@ -225,7 +225,7 @@ export default function Home() {
                 <div className="flex gap-3">
                   <button
                     onClick={handleEditAlarm}
-                    className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white py-4 rounded-2xl font-medium transition-all flex items-center justify-center gap-2 border border-zinc-700"
+                    className="flex-1 bg-[#141414] hover:bg-[#1F1F1F] text-white py-4 rounded-2xl font-medium transition-all flex items-center justify-center gap-2 border border-[#262626]"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -235,7 +235,7 @@ export default function Home() {
                   </button>
                   <button
                     onClick={handleDeleteAlarm}
-                    className="w-16 bg-red-500/10 hover:bg-red-500/20 text-red-400 py-4 rounded-2xl font-medium transition-all flex items-center justify-center border border-red-500/20"
+                    className="w-16 bg-red-600/10 hover:bg-red-600/20 text-red-400 py-4 rounded-2xl font-medium transition-all flex items-center justify-center border border-red-600/20"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="3 6 5 6 21 6"/>
@@ -249,24 +249,24 @@ export default function Home() {
             </div>
 
             {/* Tone Card - Below Main Card */}
-            <div className="mt-4 bg-zinc-900/50 backdrop-blur-sm rounded-2xl border border-zinc-800/50 px-5 py-4">
+            <div className="mt-4 bg-[#0C0C0C]/50 backdrop-blur-sm rounded-2xl border border-[#1F1F1F] px-5 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-zinc-800 rounded-xl flex items-center justify-center">
-                    <svg className="w-5 h-5 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <div className="w-10 h-10 bg-[#141414] rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-[#737373]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M9 18V5l12-2v13"/>
                       <circle cx="6" cy="18" r="3"/>
                       <circle cx="18" cy="16" r="3"/>
                     </svg>
                   </div>
                   <div>
-                    <p className="text-zinc-500 text-xs uppercase tracking-wide">Alarm Tone</p>
+                    <p className="text-[#737373] text-xs uppercase tracking-wide">Alarm Tone</p>
                     <p className="text-white font-medium capitalize">{settings?.alarmTone || 'Gentle'}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => navigate('/settings')}
-                  className="text-sky-400 text-sm font-medium hover:text-sky-300 transition-colors"
+                  className="text-red-500 text-sm font-medium hover:text-red-400 transition-colors"
                 >
                   Change
                 </button>
@@ -274,7 +274,7 @@ export default function Home() {
             </div>
 
             {/* AI Status Indicator */}
-            <div className="mt-4 flex items-center justify-center gap-2 text-zinc-500 text-sm">
+            <div className="mt-4 flex items-center justify-center gap-2 text-[#737373] text-sm">
               <div className={`w-2 h-2 rounded-full ${isModelReady ? 'bg-emerald-400' : 'bg-amber-400'}`} />
               <span>{isModelReady ? 'AI Ready' : 'Using Backup Mode'}</span>
             </div>
@@ -287,21 +287,21 @@ export default function Home() {
         <div className="px-5 pb-6 pt-4">
           <button
             onClick={() => setLocalShowUpsell(true)}
-            className="w-full bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 border border-amber-500/20 rounded-2xl p-4 transition-all"
+            className="w-full bg-gradient-to-r from-amber-600/10 to-amber-500/10 hover:from-amber-600/20 hover:to-amber-500/20 border border-amber-600/30 rounded-2xl p-4 transition-all"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/20">
+                <div className="w-10 h-10 bg-gradient-to-br from-amber-600 to-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-600/25">
                   <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                   </svg>
                 </div>
                 <div className="text-left">
                   <p className="text-white font-semibold">Upgrade to Premium</p>
-                  <p className="text-zinc-400 text-sm">Unlock all modes & features</p>
+                  <p className="text-[#737373] text-sm">Unlock all modes & features</p>
                 </div>
               </div>
-              <svg className="w-5 h-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="w-5 h-5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
             </div>

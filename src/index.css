@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===== ROOT VARIABLES ===== */
+/* ===== ROOT VARIABLES - BLACK AND RED PREMIUM THEME ===== */
 :root {
   /* Font settings */
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -12,30 +12,40 @@
   /* Color scheme - Dark theme */
   color-scheme: dark;
 
-  /* Premium Dark theme colors - Sky/Cyan + Amber/Gold palette */
-  --bg-primary: #09090B;
-  --bg-card: #18181B;
-  --bg-elevated: #27272A;
-  --bg-secondary: #18181B;
-  --bg-tertiary: #27272A;
-  --text-primary: #FAFAFA;
-  --text-secondary: #A1A1AA;
-  --text-muted: #71717A;
-  --text-tertiary: #71717A;
-  --accent-primary: #0EA5E9;
-  --accent-hover: #0284C7;
-  --accent-glow: rgba(14, 165, 233, 0.2);
-  --accent-secondary: #F59E0B;
-  --accent-secondary-subtle: rgba(245, 158, 11, 0.15);
-  --border-subtle: #3F3F46;
-  --border-accent: rgba(14, 165, 233, 0.3);
-  --success: #10B981;
+  /* Background colors */
+  --bg-primary: #050505;
+  --bg-card: #0C0C0C;
+  --bg-elevated: #141414;
+  --bg-input: #0A0A0A;
+
+  /* Red accent colors */
+  --accent-primary: #DC2626;
+  --accent-subtle: #991B1B;
+  --accent-muted: #7F1D1D;
+  --accent-glow: rgba(220, 38, 38, 0.15);
+  --accent-border: rgba(220, 38, 38, 0.3);
+
+  /* Text colors */
+  --text-primary: #FFFFFF;
+  --text-secondary: #E5E5E5;
+  --text-muted: #737373;
+  --text-disabled: #525252;
+
+  /* Border colors */
+  --border-subtle: #1F1F1F;
+  --border-default: #262626;
+  --border-hover: #333333;
+
+  /* Status colors */
+  --success: #22C55E;
   --warning: #F59E0B;
-  --danger: #EF4444;
-  --border: #3F3F46;
-  --input-bg: #18181B;
-  --input-border: #3F3F46;
-  --input-focus: #0EA5E9;
+  --danger: #DC2626;
+
+  /* Legacy support */
+  --border: #262626;
+  --input-bg: #0A0A0A;
+  --input-border: #262626;
+  --input-focus: #DC2626;
 
   /* Smooth scrolling */
   scroll-behavior: smooth;
@@ -47,11 +57,32 @@
   --safe-area-inset-left: env(safe-area-inset-left, 0px);
 }
 
-/* ===== BASE STYLES ===== */
+/* ===== SCROLLBAR STYLING ===== */
 * {
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: #262626 #050505;
 }
 
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #050505;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #333333;
+}
+
+/* ===== BASE STYLES ===== */
 html {
   /* Prevent iOS text size adjustment */
   -webkit-text-size-adjust: 100%;
@@ -63,8 +94,8 @@ body {
   min-width: 320px;
   min-height: 100vh;
   min-height: 100dvh; /* Dynamic viewport height for mobile */
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  background-color: #050505;
+  color: #FFFFFF;
 
   /* Prevent overscroll/bounce on iOS */
   overscroll-behavior: none;
@@ -220,7 +251,7 @@ button,
 /* ===== FOCUS STYLES ===== */
 /* Better focus indicators for accessibility */
 :focus-visible {
-  outline: 2px solid var(--accent-primary);
+  outline: 2px solid #DC2626;
   outline-offset: 2px;
 }
 
@@ -269,7 +300,7 @@ input[type="number"] {
 /* Backdrop blur fallback */
 @supports not (backdrop-filter: blur(10px)) {
   .backdrop-blur-sm {
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.9);
   }
 }
 

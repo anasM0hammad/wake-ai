@@ -17,10 +17,10 @@ export default function Card({
   };
 
   const classes = [
-    'bg-[#171717] rounded-2xl',
+    'bg-[#0C0C0C] rounded-2xl',
     paddingClasses[padding],
-    border ? 'border border-[#262626]' : '',
-    onClick ? 'cursor-pointer hover:bg-[#1f1f1f] transition-colors' : '',
+    border ? 'border border-[#1F1F1F]' : '',
+    onClick ? 'cursor-pointer hover:bg-[#141414] transition-colors' : '',
     className
   ].join(' ');
 
@@ -34,7 +34,7 @@ export default function Card({
             </h3>
           )}
           {subtitle && (
-            <p className="text-sm text-neutral-400 mt-1">
+            <p className="text-sm text-[#737373] mt-1">
               {subtitle}
             </p>
           )}
