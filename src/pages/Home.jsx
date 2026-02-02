@@ -93,25 +93,16 @@ export default function Home() {
       {/* Header */}
       <header className="px-5 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {/* Logo with new gradient */}
-          {/* <div className="w-11 h-11 bg-gradient-to-br from-sky-400 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg shadow-sky-500/25"> */}
-            {/* <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <polyline points="12 6 12 12 16 14"/>
-            </svg> */}
-            <img src='/assets/images/logo.png' className='w-12 h-12'/>
-          {/* </div> */}
-          {/* <h1 className="text-xl font-bold text-white">WakeAI</h1> */}
+          {/* Logo */}
+          <img
+            src='/assets/images/logo.png'
+            alt="WakeAI"
+            className='w-12 h-12 object-contain rounded-xl'
+          />
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* AI Status Badge */}
-          <div className="flex items-center gap-1.5 bg-zinc-800/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-zinc-700/50">
-            <div className={`w-2 h-2 rounded-full ${isModelReady ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50' : 'bg-amber-400'}`} />
-            <span className="text-xs font-medium text-zinc-300">{isModelReady ? 'AI Ready' : 'Backup'}</span>
-          </div>
-
-          {/* Dashboard Button - visible for ALL users */}
+        <div className="flex items-center gap-2">
+          {/* Dashboard Button */}
           <button
             onClick={() => {
               if (isPremium) {
@@ -120,17 +111,17 @@ export default function Home() {
                 setLocalShowUpsell(true);
               }
             }}
-            className="relative w-11 h-11 bg-zinc-800/60 backdrop-blur-sm hover:bg-zinc-700/60 rounded-2xl flex items-center justify-center transition-all border border-zinc-700/50"
+            className="relative w-10 h-10 bg-zinc-800/80 hover:bg-zinc-700/80 rounded-xl flex items-center justify-center transition-all border border-zinc-700/40"
           >
-            <svg className="w-5 h-5 text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7" rx="1.5"/>
-              <rect x="14" y="3" width="7" height="7" rx="1.5"/>
-              <rect x="3" y="14" width="7" height="7" rx="1.5"/>
-              <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+            <svg className="w-[18px] h-[18px] text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
             </svg>
             {/* Lock badge for free users */}
             {!isPremium && (
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center shadow-sm shadow-amber-500/30">
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
                 <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C9.24 2 7 4.24 7 7v2H6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2h-1V7c0-2.76-2.24-5-5-5zm0 2c1.66 0 3 1.34 3 3v2H9V7c0-1.66 1.34-3 3-3z"/>
                 </svg>
@@ -138,12 +129,12 @@ export default function Home() {
             )}
           </button>
 
-          {/* Settings Button - no background */}
+          {/* Settings Button */}
           <button
             onClick={() => navigate('/settings')}
-            className="w-11 h-11 flex items-center justify-center hover:opacity-70 transition-opacity"
+            className="w-10 h-10 bg-zinc-800/80 hover:bg-zinc-700/80 rounded-xl flex items-center justify-center transition-all border border-zinc-700/40"
           >
-            <svg className="w-6 h-6 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="w-[18px] h-[18px] text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
               <circle cx="12" cy="12" r="3"/>
             </svg>
@@ -170,6 +161,12 @@ export default function Home() {
             >
               Set Your Alarm
             </button>
+
+            {/* AI Status - Subtle indicator */}
+            <div className="mt-8 flex items-center gap-2 text-zinc-500 text-sm">
+              <div className={`w-2 h-2 rounded-full ${isModelReady ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+              <span>{isModelReady ? 'AI Ready' : 'Using Backup Mode'}</span>
+            </div>
           </div>
         ) : (
           /* Alarm Exists - Premium Design */
@@ -274,6 +271,12 @@ export default function Home() {
                   Change
                 </button>
               </div>
+            </div>
+
+            {/* AI Status Indicator */}
+            <div className="mt-4 flex items-center justify-center gap-2 text-zinc-500 text-sm">
+              <div className={`w-2 h-2 rounded-full ${isModelReady ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+              <span>{isModelReady ? 'AI Ready' : 'Using Backup Mode'}</span>
             </div>
           </div>
         )}
