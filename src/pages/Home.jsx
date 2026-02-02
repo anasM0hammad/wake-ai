@@ -94,13 +94,14 @@ export default function Home() {
       <header className="px-5 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* Logo with new gradient */}
-          <div className="w-11 h-11 bg-gradient-to-br from-sky-400 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg shadow-sky-500/25">
-            <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          {/* <div className="w-11 h-11 bg-gradient-to-br from-sky-400 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg shadow-sky-500/25"> */}
+            {/* <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"/>
               <polyline points="12 6 12 12 16 14"/>
-            </svg>
-          </div>
-          <h1 className="text-xl font-bold text-white">WakeAI</h1>
+            </svg> */}
+            <img src='/assets/images/logo.png' className='w-12 h-12'/>
+          {/* </div> */}
+          {/* <h1 className="text-xl font-bold text-white">WakeAI</h1> */}
         </div>
 
         <div className="flex items-center gap-3">

@@ -91,6 +91,7 @@ function AppContent() {
     if (initRef.current) return;
     initRef.current = true;
 
+    // eslint-disable-next-line react-hooks/immutability
     initializeApp();
 
     return () => {
