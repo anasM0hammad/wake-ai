@@ -49,7 +49,7 @@ export default function Settings() {
       vibrationEnabled: true,
       modelDownloaded: false,
       onboardingComplete: false
-    })
+    });
   }
 
   const handleCategoryToggle = (category) => {
