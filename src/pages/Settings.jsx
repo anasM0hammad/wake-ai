@@ -10,6 +10,7 @@ export default function Settings() {
   const { settings, updateSettings } = useSettings();
   const { isPremium, triggerUpsell } = usePremium();
   const [showResetModal, setShowResetModal] = useState(false);
+  const [showClearModal, setShowClearModal] = useState(false);
   const [showKillCodeModal, setShowKillCodeModal] = useState(false);
   const [newKillCode, setNewKillCode] = useState(['', '', '', '']);
   const [confirmKillCode, setConfirmKillCode] = useState(['', '', '', '']);
@@ -31,6 +32,25 @@ export default function Settings() {
       vibrationEnabled: true
     });
   };
+
+  const clearData = async () => {
+    const cacheNames = caches.keys();
+    for(const cache of cacheNames){
+      if(cache.includes('webllm')){
+        await caches.delete(cache);
+      }
+    }
+
+    updateSetting({
+      difficulty: 'EASY',
+      selectedCategories: ['math'],
+      alarmTone: 'gentle',
+      killCode: null,
+      vibrationEnabled: true,
+      modelDownloaded: false,
+      onboardingComplete: false
+    })
+  }
 
   const handleCategoryToggle = (category) => {
     const currentCategories = settings.selectedCategories || ['math'];
@@ -131,6 +151,11 @@ export default function Settings() {
     resetSettings();
     setShowResetModal(false);
   };
+
+  const handleClearData = () => {
+    clearData();
+    setShowClearModal(false);
+  }
 
   const renderKillCodeInputs = (values, refs, isConfirm = false) => (
     <div className="flex justify-center items-center gap-4 py-6">
@@ -347,6 +372,16 @@ export default function Settings() {
             Reset All Settings
           </Button>
         </Card>
+
+        <Card>
+          <Button
+            variant="danger"
+            className="w-full"
+            onClick={() => setShowClearModal(true)}
+          >
+            Clear Data
+          </Button>
+        </Card>
       </div>
 
       {/* Reset Confirmation Modal */}
@@ -372,6 +407,33 @@ export default function Settings() {
             onClick={handleReset}
           >
             Reset
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Reset Confirmation Modal */}
+      <Modal
+        isOpen={showClearModal}
+        onClose={() => setShowClearModal(false)}
+        title="Clear Data?"
+      >
+        <p className="text-[#737373] mb-6">
+          This will clear all the current data. This action cannot be undone.
+        </p>
+        <div className="flex gap-3">
+          <Button
+            variant="secondary"
+            className="flex-1"
+            onClick={() => setShowClearModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            className="flex-1"
+            onClick={handleClearData}
+          >
+            Clear
           </Button>
         </div>
       </Modal>
