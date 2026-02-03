@@ -17,10 +17,10 @@ export default function Card({
   };
 
   const classes = [
-    'bg-[#0C0C0C] rounded-2xl',
+    'bg-[#0D0D0D] rounded-2xl',
     paddingClasses[padding],
-    border ? 'border border-[#1F1F1F]' : '',
-    onClick ? 'cursor-pointer hover:bg-[#141414] transition-colors' : '',
+    border ? 'border border-[#1A1A1A]' : '',
+    onClick ? 'cursor-pointer hover:bg-[#161616] transition-colors' : '',
     className
   ].join(' ');
 
@@ -29,12 +29,12 @@ export default function Card({
       {(title || subtitle) && (
         <div className={padding !== 'none' ? 'mb-4' : 'p-4 pb-0'}>
           {title && (
-            <h3 className="text-lg font-semibold text-white">
+            <h3 className="text-lg font-semibold text-[#F1F1F1]">
               {title}
             </h3>
           )}
           {subtitle && (
-            <p className="text-sm text-[#737373] mt-1">
+            <p className="text-sm text-[#636363] mt-1">
               {subtitle}
             </p>
           )}

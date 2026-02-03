@@ -54,21 +54,21 @@ export default function AlarmForm({
       />
 
       {/* Form */}
-      <div className="relative w-full max-w-md mx-0 sm:mx-4 bg-[#0C0C0C] rounded-t-3xl sm:rounded-2xl shadow-xl overflow-hidden max-h-[90vh] overflow-y-auto border border-[#1F1F1F]">
+      <div className="relative w-full max-w-md mx-0 sm:mx-4 bg-[#0D0D0D] rounded-t-3xl sm:rounded-3xl shadow-xl overflow-hidden max-h-[90vh] overflow-y-auto border border-[#1A1A1A]">
         {/* Header */}
-        <div className="sticky top-0 bg-[#0C0C0C] px-6 py-4 border-b border-[#1F1F1F] flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-[#0D0D0D] px-6 py-4 border-b border-[#1A1A1A] flex items-center justify-between z-10">
           <button
             onClick={onCancel}
-            className="text-[#737373] font-medium hover:text-white"
+            className="text-[#636363] font-medium hover:text-[#F1F1F1]"
           >
             Cancel
           </button>
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-semibold text-[#F1F1F1]">
             {alarm?.id ? 'Edit Alarm' : 'New Alarm'}
           </h2>
           <button
             onClick={handleSave}
-            className="text-red-500 font-semibold hover:text-red-400"
+            className="text-[#34D399] font-semibold hover:text-[#10B981]"
           >
             Save
           </button>
@@ -85,7 +85,7 @@ export default function AlarmForm({
 
           {/* Difficulty */}
           <div>
-            <h3 className="text-xs font-medium text-[#737373] uppercase tracking-wide mb-3">Difficulty</h3>
+            <h3 className="text-xs font-medium text-[#636363] uppercase tracking-wide mb-3">Difficulty</h3>
             <div className="space-y-2">
               {Object.entries(DIFFICULTY).map(([key, value]) => {
                 const isLocked = value.premium && !isPremium;
@@ -95,23 +95,23 @@ export default function AlarmForm({
                   <button
                     key={key}
                     onClick={() => handleDifficultySelect(key)}
-                    className={`w-full p-4 rounded-xl border-2 text-left transition-all flex items-center justify-between ${
+                    className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center justify-between ${
                       isSelected
-                        ? 'border-red-600/30 bg-red-600/10'
+                        ? 'border-[#10B981]/30 bg-[#10B981]/10'
                         : isLocked
-                        ? 'border-[#1F1F1F] bg-[#0A0A0A] opacity-60'
-                        : 'border-[#1F1F1F] bg-[#0A0A0A] hover:border-[#262626]'
+                        ? 'border-[#1A1A1A] bg-[#0A0A0A] opacity-60'
+                        : 'border-[#1A1A1A] bg-[#0A0A0A] hover:border-[#222222]'
                     }`}
                   >
                     <div>
                       <div className="flex items-center gap-2">
                         <span className={`font-semibold ${
-                          isSelected ? 'text-red-400' : isLocked ? 'text-[#525252]' : 'text-white'
+                          isSelected ? 'text-[#34D399]' : isLocked ? 'text-[#636363]' : 'text-[#F1F1F1]'
                         }`}>
                           {value.name}
                         </span>
                         {isLocked && (
-                          <span className="px-2 py-0.5 text-xs font-medium bg-amber-600/20 text-amber-500 rounded-full flex items-center gap-1">
+                          <span className="px-2 py-0.5 text-xs font-medium bg-[#D4A053]/20 text-[#D4A053] rounded-full flex items-center gap-1">
                             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                             </svg>
@@ -120,7 +120,7 @@ export default function AlarmForm({
                         )}
                       </div>
                       <p className={`text-sm mt-1 ${
-                        isLocked ? 'text-[#525252]' : 'text-[#737373]'
+                        isLocked ? 'text-[#636363]' : 'text-[#636363]'
                       }`}>
                         Answer {value.questions} question{value.questions > 1 ? 's' : ''} to dismiss
                       </p>
@@ -128,8 +128,8 @@ export default function AlarmForm({
 
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                       isSelected
-                        ? 'border-red-600 bg-red-600'
-                        : 'border-[#262626]'
+                        ? 'border-[#10B981] bg-[#10B981]'
+                        : 'border-[#222222]'
                     }`}>
                       {isSelected && (
                         <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -150,7 +150,7 @@ export default function AlarmForm({
                 onCancel?.();
                 // Parent should handle delete
               }}
-              className="w-full py-3 text-red-400 font-medium hover:text-red-300 transition-colors"
+              className="w-full py-3 text-[#EF4444] font-medium hover:text-[#DC2626] transition-colors"
             >
               Delete Alarm
             </button>

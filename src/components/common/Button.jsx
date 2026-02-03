@@ -1,10 +1,11 @@
 const variants = {
-  primary: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:bg-red-800 disabled:opacity-50 shadow-lg shadow-red-600/20',
-  secondary: 'bg-[#141414] text-white hover:bg-[#1F1F1F] active:bg-[#262626] border border-[#262626]',
-  danger: 'bg-red-600/10 text-red-400 hover:bg-red-600/20 active:bg-red-600/30 border border-red-600/20',
-  success: 'bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-emerald-800 disabled:opacity-50',
-  ghost: 'bg-transparent text-[#737373] hover:bg-[#141414] hover:text-white',
-  outline: 'bg-transparent border-2 border-red-600 text-red-500 hover:bg-red-600/10'
+  primary: 'bg-[#10B981] text-white hover:bg-[#059669] active:bg-[#047857] disabled:bg-[#064E3B] disabled:opacity-50 shadow-lg shadow-[#10B981]/20',
+  secondary: 'bg-[#161616] text-[#F1F1F1] hover:bg-[#1A1A1A] active:bg-[#222222] border border-[#222222]',
+  danger: 'bg-[#EF4444]/10 text-[#EF4444] hover:bg-[#EF4444]/20 active:bg-[#EF4444]/30 border border-[#EF4444]/20',
+  success: 'bg-[#22C55E] text-white hover:bg-[#16A34A] active:bg-[#15803D] disabled:bg-[#15803D] disabled:opacity-50',
+  ghost: 'bg-transparent text-[#636363] hover:bg-[#161616] hover:text-[#F1F1F1]',
+  outline: 'bg-transparent border-2 border-[#10B981] text-[#10B981] hover:bg-[#10B981]/10',
+  premium: 'bg-gradient-to-r from-[#D4A053] to-[#C08B3F] text-white hover:from-[#C08B3F] hover:to-[#B07A35] shadow-lg shadow-[#D4A053]/20'
 };
 
 const sizes = {
@@ -28,7 +29,7 @@ export default function Button({
   type = 'button',
   ...props
 }) {
-  const baseClasses = 'inline-flex items-center justify-center font-semibold rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 focus:ring-offset-[#050505] disabled:cursor-not-allowed';
+  const baseClasses = 'inline-flex items-center justify-center font-semibold rounded-2xl transition-colors focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:ring-offset-2 focus:ring-offset-[#050505] disabled:cursor-not-allowed';
 
   const classes = [
     baseClasses,

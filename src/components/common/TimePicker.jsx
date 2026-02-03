@@ -84,8 +84,8 @@ export default function TimePicker({ value, onChange, className = '' }) {
           key={item}
           className={`h-14 flex items-center justify-center snap-center cursor-pointer transition-all ${
             item === value
-              ? 'text-4xl font-bold text-red-500'
-              : 'text-2xl text-[#525252]'
+              ? 'text-4xl font-bold text-[#10B981]'
+              : 'text-2xl text-[#636363]'
           }`}
           onClick={() => {
             setter(item);
@@ -100,18 +100,18 @@ export default function TimePicker({ value, onChange, className = '' }) {
   );
 
   return (
-    <div className={`bg-[#0C0C0C] rounded-2xl p-4 border border-[#1F1F1F] ${className}`}>
+    <div className={`bg-[#0D0D0D] rounded-2xl p-4 border border-[#1A1A1A] ${className}`}>
       <div className="flex items-center justify-center gap-2">
         {/* Hours */}
-        <div className="w-20 bg-[#141414] rounded-xl overflow-hidden">
+        <div className="w-20 bg-[#161616] rounded-2xl overflow-hidden">
           {renderScrollColumn(hourItems, hours, setHours, hoursRef, (v) => v.toString())}
         </div>
 
         {/* Separator */}
-        <div className="text-4xl font-bold text-[#525252]">:</div>
+        <div className="text-4xl font-bold text-[#636363]">:</div>
 
         {/* Minutes */}
-        <div className="w-20 bg-[#141414] rounded-xl overflow-hidden">
+        <div className="w-20 bg-[#161616] rounded-2xl overflow-hidden">
           {renderScrollColumn(minuteItems, minutes, setMinutes, minutesRef)}
         </div>
 
@@ -119,20 +119,20 @@ export default function TimePicker({ value, onChange, className = '' }) {
         <div className="flex flex-col gap-2 ml-2">
           <button
             onClick={() => setIsPM(false)}
-            className={`px-4 py-3 rounded-xl font-semibold text-lg transition-all ${
+            className={`px-4 py-3 rounded-2xl font-semibold text-lg transition-all ${
               !isPM
-                ? 'bg-red-600 text-white'
-                : 'bg-[#141414] text-[#525252] hover:bg-[#1F1F1F]'
+                ? 'bg-[#10B981] text-white'
+                : 'bg-[#161616] text-[#636363] hover:bg-[#1A1A1A]'
             }`}
           >
             AM
           </button>
           <button
             onClick={() => setIsPM(true)}
-            className={`px-4 py-3 rounded-xl font-semibold text-lg transition-all ${
+            className={`px-4 py-3 rounded-2xl font-semibold text-lg transition-all ${
               isPM
-                ? 'bg-red-600 text-white'
-                : 'bg-[#141414] text-[#525252] hover:bg-[#1F1F1F]'
+                ? 'bg-[#10B981] text-white'
+                : 'bg-[#161616] text-[#636363] hover:bg-[#1A1A1A]'
             }`}
           >
             PM
@@ -142,7 +142,7 @@ export default function TimePicker({ value, onChange, className = '' }) {
 
       {/* Quick time display */}
       <div className="mt-4 text-center">
-        <span className="text-sm text-[#737373]">
+        <span className="text-sm text-[#636363]">
           {hours}:{minutes.toString().padStart(2, '0')} {isPM ? 'PM' : 'AM'}
         </span>
       </div>

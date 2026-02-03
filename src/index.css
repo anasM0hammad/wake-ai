@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===== ROOT VARIABLES - BLACK AND RED PREMIUM THEME ===== */
+/* ===== ROOT VARIABLES - OBSIDIAN + EMERALD + GOLD THEME ===== */
 :root {
   /* Font settings */
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -14,38 +14,60 @@
 
   /* Background colors */
   --bg-primary: #050505;
-  --bg-card: #0C0C0C;
-  --bg-elevated: #141414;
+  --bg-card: #0D0D0D;
+  --bg-elevated: #161616;
   --bg-input: #0A0A0A;
+  --bg-hover: #1A1A1A;
 
-  /* Red accent colors */
-  --accent-primary: #DC2626;
-  --accent-subtle: #991B1B;
-  --accent-muted: #7F1D1D;
-  --accent-glow: rgba(220, 38, 38, 0.15);
-  --accent-border: rgba(220, 38, 38, 0.3);
+  /* Emerald accent colors (Primary) */
+  --emerald: #10B981;
+  --emerald-hover: #059669;
+  --emerald-muted: #064E3B;
+  --emerald-glow: rgba(16, 185, 129, 0.15);
+  --emerald-border: rgba(16, 185, 129, 0.25);
+  --emerald-text: #34D399;
+
+  /* Gold accent colors (Premium) */
+  --gold: #D4A053;
+  --gold-hover: #C08B3F;
+  --gold-muted: #5C3D1A;
+  --gold-glow: rgba(212, 160, 83, 0.15);
+  --gold-border: rgba(212, 160, 83, 0.25);
+  --gold-text: #E8BC6A;
 
   /* Text colors */
-  --text-primary: #FFFFFF;
-  --text-secondary: #E5E5E5;
-  --text-muted: #737373;
-  --text-disabled: #525252;
+  --text-primary: #F1F1F1;
+  --text-secondary: #B0B0B0;
+  --text-muted: #636363;
+  --text-disabled: #3A3A3A;
 
   /* Border colors */
-  --border-subtle: #1F1F1F;
-  --border-default: #262626;
-  --border-hover: #333333;
+  --border-subtle: #1A1A1A;
+  --border-default: #222222;
+  --border-hover: #2E2E2E;
 
   /* Status colors */
   --success: #22C55E;
+  --success-bg: rgba(34, 197, 94, 0.12);
+  --danger: #EF4444;
+  --danger-bg: rgba(239, 68, 68, 0.12);
   --warning: #F59E0B;
-  --danger: #DC2626;
+
+  /* Onboarding colors (Coral + Ice) */
+  --coral: #FF6B6B;
+  --coral-hover: #E85D5D;
+  --coral-muted: #4A1C1C;
+  --coral-glow: rgba(255, 107, 107, 0.15);
+  --coral-border: rgba(255, 107, 107, 0.25);
+  --coral-text: #FF8A8A;
+  --ice: #E8ECF1;
+  --ice-muted: #C8CDD4;
 
   /* Legacy support */
-  --border: #262626;
+  --border: #222222;
   --input-bg: #0A0A0A;
-  --input-border: #262626;
-  --input-focus: #DC2626;
+  --input-border: #222222;
+  --input-focus: #10B981;
 
   /* Smooth scrolling */
   scroll-behavior: smooth;
@@ -61,7 +83,7 @@
 * {
   box-sizing: border-box;
   scrollbar-width: thin;
-  scrollbar-color: #262626 #050505;
+  scrollbar-color: #222222 #050505;
 }
 
 *::-webkit-scrollbar {
@@ -95,7 +117,7 @@ body {
   min-height: 100vh;
   min-height: 100dvh; /* Dynamic viewport height for mobile */
   background-color: #050505;
-  color: #FFFFFF;
+  color: #F1F1F1;
 
   /* Prevent overscroll/bounce on iOS */
   overscroll-behavior: none;
@@ -251,7 +273,7 @@ button,
 /* ===== FOCUS STYLES ===== */
 /* Better focus indicators for accessibility */
 :focus-visible {
-  outline: 2px solid #DC2626;
+  outline: 2px solid #10B981;
   outline-offset: 2px;
 }
 

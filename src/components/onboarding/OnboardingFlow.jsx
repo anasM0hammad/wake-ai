@@ -40,16 +40,16 @@ export default function OnboardingFlow({ onComplete }) {
       {!isFirstStep && (
         <div className="px-6 pt-4 pb-2">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-[#737373]">
+            <span className="text-sm text-[#636363]">
               Step {currentStep + 1} of {STEPS.length}
             </span>
-            <span className="text-sm font-medium text-red-500">
+            <span className="text-sm font-medium text-[#FF8A8A]">
               {STEPS[currentStep].title}
             </span>
           </div>
-          <div className="h-1.5 bg-[#1F1F1F] rounded-full overflow-hidden">
+          <div className="h-1.5 bg-[#161616] rounded-full overflow-hidden">
             <div
-              className="h-full bg-red-600 rounded-full transition-all duration-300"
+              className="h-full bg-gradient-to-r from-[#FF6B6B] to-[#E85D5D] rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -64,10 +64,10 @@ export default function OnboardingFlow({ onComplete }) {
               key={step.id}
               className={`w-2 h-2 rounded-full transition-colors ${
                 index === currentStep
-                  ? 'bg-red-600'
+                  ? 'bg-[#FF6B6B]'
                   : index < currentStep
-                  ? 'bg-red-900'
-                  : 'bg-[#262626]'
+                  ? 'bg-[#4A1C1C]'
+                  : 'bg-[#222222]'
               }`}
             />
           ))}

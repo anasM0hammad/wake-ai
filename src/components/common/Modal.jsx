@@ -57,19 +57,19 @@ export default function Modal({
       />
 
       {/* Modal content */}
-      <div className={`relative w-full ${sizeClasses[size]} bg-[#0C0C0C] rounded-3xl shadow-xl overflow-hidden border border-[#1F1F1F] ${className}`}>
+      <div className={`relative w-full ${sizeClasses[size]} bg-[#0D0D0D] rounded-3xl shadow-2xl overflow-hidden border border-[#1A1A1A] ${className}`}>
         {/* Header */}
         {(title || showClose) && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[#1F1F1F]">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[#1A1A1A]">
             {title && (
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold text-[#F1F1F1]">
                 {title}
               </h2>
             )}
             {showClose && (
               <button
                 onClick={onClose}
-                className="p-2 text-[#737373] hover:text-white transition-colors rounded-lg hover:bg-[#141414]"
+                className="p-2 text-[#636363] hover:text-[#F1F1F1] transition-colors rounded-lg hover:bg-[#161616]"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

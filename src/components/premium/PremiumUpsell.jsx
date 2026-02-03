@@ -89,9 +89,9 @@ export default function PremiumUpsell({ isOpen, onClose, feature, onUpgrade }) {
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md mx-4 mb-4 sm:mb-0 bg-[#0C0C0C] rounded-2xl shadow-xl overflow-hidden animate-slide-up border border-[#1F1F1F]">
+      <div className="relative w-full max-w-md mx-4 mb-4 sm:mb-0 bg-[#0D0D0D] rounded-3xl shadow-xl overflow-hidden animate-slide-up border border-[#1A1A1A]">
         {/* Header - Gold Gradient */}
-        <div className="relative bg-gradient-to-br from-amber-600 to-amber-500 px-6 py-8 text-center text-white">
+        <div className="relative bg-gradient-to-br from-[#D4A053] to-[#C08B3F] px-6 py-8 text-center text-white">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-full hover:bg-black/20 transition-colors"
@@ -101,7 +101,7 @@ export default function PremiumUpsell({ isOpen, onClose, feature, onUpgrade }) {
             </svg>
           </button>
 
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/20 flex items-center justify-center shadow-lg shadow-[#D4A053]/30">
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <polygon strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
@@ -120,12 +120,12 @@ export default function PremiumUpsell({ isOpen, onClose, feature, onUpgrade }) {
           <div className="space-y-4">
             {PREMIUM_FEATURES.map((item, index) => (
               <div key={index} className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-amber-600/10 text-amber-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-[#D4A053]/10 text-[#D4A053] flex items-center justify-center flex-shrink-0">
                   {item.icon}
                 </div>
                 <div>
-                  <h4 className="font-semibold text-white">{item.title}</h4>
-                  <p className="text-sm text-[#737373]">{item.description}</p>
+                  <h4 className="font-semibold text-[#F1F1F1]">{item.title}</h4>
+                  <p className="text-sm text-[#636363]">{item.description}</p>
                 </div>
               </div>
             ))}
@@ -133,25 +133,25 @@ export default function PremiumUpsell({ isOpen, onClose, feature, onUpgrade }) {
         </div>
 
         {/* Pricing */}
-        <div className="px-6 py-4 bg-[#050505] border-t border-[#1F1F1F]">
+        <div className="px-6 py-4 bg-[#050505] border-t border-[#1A1A1A]">
           <div className="text-center mb-4">
             <div className="flex items-baseline justify-center gap-1">
-              <span className="text-3xl font-bold text-white">$4.99</span>
-              <span className="text-[#737373]">/month</span>
+              <span className="text-3xl font-bold text-[#F1F1F1]">$4.99</span>
+              <span className="text-[#636363]">/month</span>
             </div>
-            <p className="text-sm text-[#737373] mt-1">or $29.99/year (save 50%)</p>
+            <p className="text-sm text-[#E8BC6A] mt-1">or $29.99/year (save 50%)</p>
           </div>
 
           <button
             onClick={handleUpgrade}
-            className="w-full py-4 px-6 bg-gradient-to-r from-amber-600 to-amber-500 text-white font-semibold rounded-xl hover:from-amber-700 hover:to-amber-600 active:from-amber-800 active:to-amber-700 transition-all shadow-lg shadow-amber-600/25"
+            className="w-full py-4 px-6 bg-gradient-to-r from-[#D4A053] to-[#C08B3F] text-white font-semibold rounded-2xl hover:from-[#C08B3F] hover:to-[#B07A35] active:from-[#B07A35] active:to-[#9A6A2A] transition-all shadow-lg shadow-[#D4A053]/25"
           >
             Upgrade Now
           </button>
 
           <button
             onClick={onClose}
-            className="w-full py-3 mt-2 text-[#737373] font-medium hover:text-white transition-colors"
+            className="w-full py-3 mt-2 text-[#636363] font-medium hover:text-[#B0B0B0] transition-colors"
           >
             Maybe Later
           </button>

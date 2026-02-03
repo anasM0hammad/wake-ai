@@ -13,9 +13,9 @@ export default function LoadingSpinner({
   };
 
   const colors = {
-    primary: 'border-primary-200 border-t-primary-600',
+    primary: 'border-[#222222] border-t-[#10B981]',
     white: 'border-white/30 border-t-white',
-    gray: 'border-gray-200 border-t-gray-600'
+    gray: 'border-[#222222] border-t-[#636363]'
   };
 
   const spinner = (
@@ -28,7 +28,7 @@ export default function LoadingSpinner({
         `}
       />
       {text && (
-        <p className={`mt-3 text-sm ${color === 'white' ? 'text-white' : 'text-gray-600 dark:text-gray-400'}`}>
+        <p className={`mt-3 text-sm ${color === 'white' ? 'text-white' : 'text-[#636363]'}`}>
           {text}
         </p>
       )}
@@ -37,7 +37,7 @@ export default function LoadingSpinner({
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-50">
+      <div className="fixed inset-0 flex items-center justify-center bg-[#050505]/80 backdrop-blur-sm z-50">
         {spinner}
       </div>
     );

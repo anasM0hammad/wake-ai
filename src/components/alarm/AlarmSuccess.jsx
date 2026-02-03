@@ -71,45 +71,45 @@ export default function AlarmSuccess({
       {/* Main content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6">
         {/* Success icon */}
-        <div className="w-32 h-32 rounded-full bg-emerald-600/20 flex items-center justify-center mb-8 animate-bounce-slow">
-          <div className="w-24 h-24 rounded-full bg-emerald-600/30 flex items-center justify-center">
-            <svg className="w-12 h-12 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-32 h-32 rounded-full bg-[#10B981]/20 flex items-center justify-center mb-8 animate-bounce-slow">
+          <div className="w-24 h-24 rounded-full bg-[#10B981]/30 flex items-center justify-center">
+            <svg className="w-12 h-12 text-[#34D399]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           </div>
         </div>
 
         {/* Title */}
-        <h1 className="text-4xl font-bold text-white mb-4 text-center">
+        <h1 className="text-4xl font-bold text-[#F1F1F1] mb-4 text-center">
           You're Awake!
         </h1>
 
         {/* Motivational message */}
-        <p className="text-[#E5E5E5] text-center text-lg mb-10 max-w-sm">
+        <p className="text-[#B0B0B0] text-center text-lg mb-10 max-w-sm">
           {message}
         </p>
 
         {/* Stats */}
-        <div className="bg-[#0C0C0C] border border-[#1F1F1F] rounded-2xl p-6 w-full max-w-sm mb-8">
-          <h3 className="text-[#737373] text-sm font-medium mb-4 text-center">Session Stats</h3>
+        <div className="bg-[#0D0D0D] border border-[#1A1A1A] rounded-2xl p-6 w-full max-w-sm mb-8">
+          <h3 className="text-[#636363] text-sm font-medium mb-4 text-center">Session Stats</h3>
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
-              <div className="text-3xl font-bold text-white">
+              <div className="text-3xl font-bold text-[#F1F1F1]">
                 {stats.questionsAnswered}
               </div>
-              <div className="text-[#525252] text-xs mt-1">Questions</div>
+              <div className="text-[#636363] text-xs mt-1">Questions</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-emerald-400">
+              <div className="text-3xl font-bold text-[#34D399]">
                 {stats.questionsCorrect}
               </div>
-              <div className="text-[#525252] text-xs mt-1">Correct</div>
+              <div className="text-[#636363] text-xs mt-1">Correct</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-white">
+              <div className="text-3xl font-bold text-[#F1F1F1]">
                 {formatDuration(stats.duration)}
               </div>
-              <div className="text-[#525252] text-xs mt-1">Time</div>
+              <div className="text-[#636363] text-xs mt-1">Time</div>
             </div>
           </div>
         </div>
@@ -118,10 +118,10 @@ export default function AlarmSuccess({
         {stats.questionsAnswered > 0 && (
           <div className="mb-8">
             <div className="text-center">
-              <span className="text-5xl font-bold text-white">
+              <span className="text-5xl font-bold text-[#F1F1F1]">
                 {Math.round((stats.questionsCorrect / stats.questionsAnswered) * 100)}%
               </span>
-              <span className="text-[#737373] ml-2">accuracy</span>
+              <span className="text-[#636363] ml-2">accuracy</span>
             </div>
           </div>
         )}
@@ -130,8 +130,8 @@ export default function AlarmSuccess({
       {/* Ad placeholder for free users */}
       {!isPremium && (
         <div className="px-6 mb-4">
-          <div className="bg-[#0C0C0C] border border-[#1F1F1F] rounded-xl p-4 text-center">
-            <p className="text-[#525252] text-sm">Ad placeholder</p>
+          <div className="bg-[#0D0D0D] border border-[#1A1A1A] rounded-xl p-4 text-center">
+            <p className="text-[#636363] text-sm">Ad placeholder</p>
           </div>
         </div>
       )}
@@ -140,7 +140,7 @@ export default function AlarmSuccess({
       <div className="px-6 pb-8">
         <button
           onClick={onClose}
-          className="w-full py-4 px-6 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 active:bg-red-800 transition-colors"
+          className="w-full py-4 px-6 bg-[#10B981] text-white font-semibold rounded-xl hover:bg-[#059669] active:bg-[#047857] transition-colors"
         >
           Start Your Day
         </button>
