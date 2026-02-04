@@ -18,6 +18,103 @@ const ALARM_VIBRATION_PATTERN = [1000, 500, 1000, 500, 1000, 500];
 let currentSound = null;
 let vibrationInterval = null;
 let loadedTones = {};
+let webAudioOscillator = null;
+let webAudioContext = null;
+let webAudioGain = null;
+
+/**
+ * Generate a beep tone using Web Audio API as fallback when audio files are missing
+ * @returns {Object} Object with play/stop methods mimicking Howl interface
+ */
+function createWebAudioBeep() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return null;
+
+    webAudioContext = new AudioContext();
+    webAudioOscillator = webAudioContext.createOscillator();
+    webAudioGain = webAudioContext.createGain();
+
+    webAudioOscillator.connect(webAudioGain);
+    webAudioGain.connect(webAudioContext.destination);
+
+    // Configure oscillator for alarm sound
+    webAudioOscillator.frequency.value = 800;
+    webAudioOscillator.type = 'sine';
+    webAudioGain.gain.value = 0.5;
+
+    // Create pulsing effect
+    let isPlaying = false;
+    let pulseInterval = null;
+
+    const startPulse = () => {
+      pulseInterval = setInterval(() => {
+        if (webAudioGain && webAudioContext) {
+          // Pulse between 0.1 and 0.5 for alarm effect
+          const currentTime = webAudioContext.currentTime;
+          webAudioGain.gain.setValueAtTime(0.5, currentTime);
+          webAudioGain.gain.linearRampToValueAtTime(0.1, currentTime + 0.3);
+          webAudioGain.gain.linearRampToValueAtTime(0.5, currentTime + 0.6);
+        }
+      }, 600);
+    };
+
+    return {
+      play: () => {
+        if (!isPlaying) {
+          try {
+            webAudioOscillator.start();
+            isPlaying = true;
+            startPulse();
+          } catch (e) {
+            // Already started, ignore
+          }
+        }
+        return 1;
+      },
+      stop: () => {
+        if (pulseInterval) {
+          clearInterval(pulseInterval);
+          pulseInterval = null;
+        }
+        if (webAudioOscillator) {
+          try {
+            webAudioOscillator.stop();
+          } catch (e) {
+            // Already stopped, ignore
+          }
+        }
+      },
+      unload: () => {
+        if (pulseInterval) {
+          clearInterval(pulseInterval);
+          pulseInterval = null;
+        }
+        if (webAudioContext) {
+          try {
+            webAudioContext.close();
+          } catch (e) {
+            // Already closed, ignore
+          }
+        }
+        webAudioOscillator = null;
+        webAudioContext = null;
+        webAudioGain = null;
+      },
+      volume: (v) => {
+        if (webAudioGain && v !== undefined) {
+          webAudioGain.gain.value = v * 0.5;
+        }
+        return webAudioGain ? webAudioGain.gain.value : 0.5;
+      },
+      playing: () => isPlaying,
+      fade: () => {} // No-op for fallback
+    };
+  } catch (error) {
+    console.error('[AudioPlayer] Failed to create Web Audio fallback:', error);
+    return null;
+  }
+}
 
 export async function loadTone(toneName) {
   const toneFile = TONE_FILES[toneName] || TONE_FILES.gentle;
@@ -54,19 +151,39 @@ export async function playAlarm(toneName = 'gentle', loop = true) {
       loop,
       volume: 1.0,
       onplay: () => {
+        console.log('[AudioPlayer] Alarm playing:', toneFile);
         resolve(currentSound);
       },
       onplayerror: (id, error) => {
-        console.error('Failed to play alarm:', error);
+        console.error('[AudioPlayer] Failed to play alarm:', error);
         // Try to recover by unlocking audio context
         currentSound.once('unlock', () => {
           currentSound.play();
         });
-        reject(error);
+        // If still failing, use Web Audio fallback
+        setTimeout(() => {
+          if (!currentSound.playing()) {
+            console.log('[AudioPlayer] Using Web Audio fallback');
+            currentSound = createWebAudioBeep();
+            if (currentSound) {
+              currentSound.play();
+              resolve(currentSound);
+            } else {
+              reject(error);
+            }
+          }
+        }, 500);
       },
       onloaderror: (id, error) => {
-        console.error('Failed to load alarm sound:', error);
-        reject(error);
+        console.error('[AudioPlayer] Failed to load alarm sound, using Web Audio fallback');
+        // Use Web Audio API fallback when audio file doesn't exist
+        currentSound = createWebAudioBeep();
+        if (currentSound) {
+          currentSound.play();
+          resolve(currentSound);
+        } else {
+          reject(error);
+        }
       }
     });
 

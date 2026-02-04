@@ -10,6 +10,7 @@ import AlarmSuccess from '../components/alarm/AlarmSuccess';
 import AlarmFailure from '../components/alarm/AlarmFailure';
 import { getRandomFallbackQuestions } from '../services/llm/fallbackQuestions';
 import { DIFFICULTY, MAX_WRONG_ANSWERS, MAX_RING_DURATION_MS } from '../utils/constants';
+import { resetAlarmFiring } from '../services/alarm/alarmTimer';
 
 const STATES = {
   RINGING: 'ringing',
@@ -48,8 +49,26 @@ export default function AlarmRingingPage() {
   const timeoutRef = useRef(null);
   const alarmDataRef = useRef(null);
 
-  // Get alarm data from route state or current alarm
-  const alarmData = location.state?.alarm || alarm || activeAlarm;
+  // Get alarm data from route state, sessionStorage, or current alarm
+  const getAlarmData = () => {
+    // First try route state
+    if (location.state?.alarm) return location.state.alarm;
+
+    // Then try sessionStorage (set by AlarmMonitor)
+    const sessionAlarm = sessionStorage.getItem('wakeai_active_alarm');
+    if (sessionAlarm) {
+      try {
+        return JSON.parse(sessionAlarm);
+      } catch (e) {
+        console.error('[AlarmRingingPage] Failed to parse session alarm:', e);
+      }
+    }
+
+    // Finally fall back to hook data
+    return alarm || activeAlarm;
+  };
+
+  const alarmData = getAlarmData();
   const difficulty = alarmData?.difficulty || settings.difficulty || 'EASY';
   const requiredCorrect = DIFFICULTY[difficulty]?.questions || 1;
 
@@ -177,11 +196,19 @@ export default function AlarmRingingPage() {
   const handleKillSwitch = useCallback(async () => {
     clearTimeout(timeoutRef.current);
     await dismiss('kill');
+    // Reset alarm firing flag so future alarms can fire
+    resetAlarmFiring();
+    // Clear session storage
+    sessionStorage.removeItem('wakeai_active_alarm');
     navigate('/', { replace: true });
   }, [dismiss, navigate]);
 
   // Handle close (after success or failure)
   const handleClose = useCallback(() => {
+    // Reset alarm firing flag so future alarms can fire
+    resetAlarmFiring();
+    // Clear session storage
+    sessionStorage.removeItem('wakeai_active_alarm');
     navigate('/', { replace: true });
   }, [navigate]);
 

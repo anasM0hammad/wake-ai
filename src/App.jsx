@@ -74,6 +74,7 @@ import { App as CapacitorApp } from '@capacitor/app';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Home, Onboarding, AlarmRingingPage, Settings, Dashboard } from './pages';
 import { ErrorBoundary, AlarmErrorBoundary } from './components/common';
+import AlarmMonitor from './components/AlarmMonitor';
 import { isOnboardingComplete } from './services/storage/settingsStorage';
 import { getSettings } from './services/storage/settingsStorage';
 import { initializeModel } from './services/llm/webllm';
@@ -209,10 +210,13 @@ function AppContent() {
   };
 
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/onboarding" element={<Onboarding />} />
-      <Route
+    <>
+      {/* JavaScript-based alarm timer that works on web and Android */}
+      <AlarmMonitor />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/onboarding" element={<Onboarding />} />
+        <Route
         path="/alarm-ringing"
         element={
           <AlarmErrorBoundary
@@ -228,8 +232,9 @@ function AppContent() {
         }
       />
       <Route path="/settings" element={<Settings />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-    </Routes>
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </>
   );
 }
 
