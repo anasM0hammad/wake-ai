@@ -7,40 +7,79 @@ export default function SwipeToStart({
 }) {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const touchStartX = useRef(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startX = useRef(0);
   const containerRef = useRef(null);
 
   const SWIPE_THRESHOLD = 120;
   const MAX_SWIPE = 150;
 
-  const handleTouchStart = (e) => {
-    if (isAnimating) return;
-    touchStartX.current = e.touches[0].clientX;
+  // Get clientX from either touch or mouse event
+  const getClientX = (e) => {
+    if (e.touches && e.touches[0]) {
+      return e.touches[0].clientX;
+    }
+    return e.clientX;
   };
 
-  const handleTouchMove = (e) => {
+  const handleStart = (e) => {
     if (isAnimating) return;
-    const currentX = e.touches[0].clientX;
-    const diff = currentX - touchStartX.current;
+    startX.current = getClientX(e);
+    setIsDragging(true);
+  };
+
+  const handleMove = (e) => {
+    if (isAnimating || !isDragging) return;
+    const currentX = getClientX(e);
+    const diff = currentX - startX.current;
     // Only allow swiping right (positive direction)
     const clampedDiff = Math.max(0, Math.min(MAX_SWIPE, diff));
-
     setSwipeOffset(clampedDiff);
   };
 
-  const handleTouchEnd = () => {
-    if (isAnimating) return;
+  const handleEnd = () => {
+    if (isAnimating || !isDragging) return;
+    setIsDragging(false);
 
     if (swipeOffset > SWIPE_THRESHOLD) {
       // Swipe right - Dismiss (start questions)
+      console.log('[SwipeToStart] Swipe threshold reached, calling onDismiss');
       setIsAnimating(true);
       setSwipeOffset(MAX_SWIPE);
       setTimeout(() => {
-        onDismiss?.();
+        if (onDismiss) {
+          console.log('[SwipeToStart] Executing onDismiss callback');
+          onDismiss();
+        } else {
+          console.error('[SwipeToStart] onDismiss callback is not defined!');
+        }
       }, 200);
     } else {
       // Reset
       setSwipeOffset(0);
+    }
+  };
+
+  // Legacy touch handlers for compatibility
+  const handleTouchStart = (e) => handleStart(e);
+  const handleTouchMove = (e) => handleMove(e);
+  const handleTouchEnd = () => handleEnd();
+
+  // Mouse handlers for desktop browser testing
+  const handleMouseDown = (e) => {
+    e.preventDefault();
+    handleStart(e);
+  };
+  const handleMouseMove = (e) => {
+    if (isDragging) {
+      e.preventDefault();
+      handleMove(e);
+    }
+  };
+  const handleMouseUp = () => handleEnd();
+  const handleMouseLeave = () => {
+    if (isDragging) {
+      handleEnd();
     }
   };
 
@@ -100,10 +139,14 @@ export default function SwipeToStart({
       <div className="px-6 pb-12">
         <div
           ref={containerRef}
-          className="relative h-20 bg-[#0D0D0D] border border-[#1A1A1A] rounded-full overflow-hidden"
+          className="relative h-20 bg-[#0D0D0D] border border-[#1A1A1A] rounded-full overflow-hidden select-none cursor-grab active:cursor-grabbing"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
         >
           {/* Right indicator (Dismiss) */}
           <div

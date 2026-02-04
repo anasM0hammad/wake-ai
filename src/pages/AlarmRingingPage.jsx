@@ -103,28 +103,50 @@ export default function AlarmRingingPage() {
 
   // Load questions when transitioning to questioning state
   const loadQuestions = useCallback(async (count) => {
+    console.log('[AlarmRinging] loadQuestions called, count:', count);
     const categories = settings.selectedCategories || ['math'];
+    console.log('[AlarmRinging] Categories:', categories, 'LLM Ready:', isLLMReady);
 
     // Try to generate with LLM, fallback to pre-written
     let loadedQuestions;
     if (isLLMReady) {
-      loadedQuestions = await generateQuestions(categories, count + 5); // Load extra for wrong answers
+      try {
+        loadedQuestions = await generateQuestions(categories, count + 5); // Load extra for wrong answers
+        console.log('[AlarmRinging] LLM generated questions:', loadedQuestions?.length || 0);
+      } catch (error) {
+        console.error('[AlarmRinging] LLM question generation failed:', error);
+      }
     }
 
     if (!loadedQuestions || loadedQuestions.length === 0) {
+      console.log('[AlarmRinging] Using fallback questions');
       loadedQuestions = getRandomFallbackQuestions(categories, count + 5);
     }
 
+    console.log('[AlarmRinging] Final questions loaded:', loadedQuestions?.length || 0);
     setQuestions(loadedQuestions);
   }, [settings.selectedCategories, isLLMReady, generateQuestions]);
 
   // Handle swipe to dismiss
   const handleDismiss = useCallback(async () => {
-    await loadQuestions(requiredCorrect);
-    setCurrentQuestionIndex(0);
-    setCorrectCount(0);
-    setWrongCount(0);
-    setState(STATES.QUESTIONING);
+    console.log('[AlarmRinging] handleDismiss called, loading questions...');
+    try {
+      await loadQuestions(requiredCorrect);
+      console.log('[AlarmRinging] Questions loaded, transitioning to QUESTIONING state');
+      setCurrentQuestionIndex(0);
+      setCorrectCount(0);
+      setWrongCount(0);
+      setState(STATES.QUESTIONING);
+    } catch (error) {
+      console.error('[AlarmRinging] Error in handleDismiss:', error);
+      // Still try to proceed with fallback questions
+      const fallbackQuestions = getRandomFallbackQuestions(['math'], requiredCorrect + 5);
+      setQuestions(fallbackQuestions);
+      setCurrentQuestionIndex(0);
+      setCorrectCount(0);
+      setWrongCount(0);
+      setState(STATES.QUESTIONING);
+    }
   }, [loadQuestions, requiredCorrect]);
 
   // Handle answer
