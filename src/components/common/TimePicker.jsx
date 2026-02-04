@@ -60,7 +60,7 @@ export default function TimePicker({ value, onChange, className = '' }) {
   // Initialize scroll positions
   useEffect(() => {
     const hourItems = Array.from({ length: 12 }, (_, i) => i + 1);
-    const minuteItems = Array.from({ length: 12 }, (_, i) => i * 5);
+    const minuteItems = Array.from({ length: 60 }, (_, i) => i);
 
     setTimeout(() => {
       scrollToValue(hoursRef, hourItems, hours);
@@ -69,7 +69,7 @@ export default function TimePicker({ value, onChange, className = '' }) {
   }, []);
 
   const hourItems = Array.from({ length: 12 }, (_, i) => i + 1);
-  const minuteItems = Array.from({ length: 12 }, (_, i) => i * 5);
+  const minuteItems = Array.from({ length: 60 }, (_, i) => i);
 
   const renderScrollColumn = (items, value, setter, ref, formatFn = (v) => v.toString().padStart(2, '0')) => (
     <div
