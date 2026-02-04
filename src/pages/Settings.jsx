@@ -34,14 +34,14 @@ export default function Settings() {
   };
 
   const clearData = async () => {
-    const cacheNames = caches.keys();
+    const cacheNames = await caches.keys();
     for(const cache of cacheNames){
       if(cache.includes('webllm')){
         await caches.delete(cache);
       }
     }
 
-    updateSetting({
+    updateSettings({
       difficulty: 'EASY',
       selectedCategories: ['math'],
       alarmTone: 'gentle',
@@ -366,17 +366,14 @@ export default function Settings() {
         <Card>
           <Button
             variant="danger"
-            className="w-full"
+            className="w-full mb-1"
             onClick={() => setShowResetModal(true)}
           >
             Reset All Settings
           </Button>
-        </Card>
-
-        <Card>
           <Button
-            variant="danger"
-            className="w-full"
+            variant="ghost"
+            className="w-full mt-2"
             onClick={() => setShowClearModal(true)}
           >
             Clear Data
