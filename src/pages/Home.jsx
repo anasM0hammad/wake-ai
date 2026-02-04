@@ -196,7 +196,7 @@ export default function Home() {
                 </div>
                 {alarm.enabled && timeUntil && (
                   <p className="text-[#636363] text-base">
-                    Rings {timeUntil}
+                    Rings in {timeUntil}
                   </p>
                 )}
               </div>
@@ -212,8 +212,8 @@ export default function Home() {
                       · {difficultyInfo.questions}Q
                     </span>
                   </div>
-                  <div className="bg-[#161616] border border-[#222222] px-4 py-2 rounded-2xl">
-                    <span className="text-[#F1F1F1] text-sm font-medium capitalize">
+                  <div className="bg-[#10B981]/10 border border-[#10B981]/20 px-4 py-2 rounded-2xl">
+                    <span className="text-[#34D399] text-sm font-medium capitalize">
                       {settings?.selectedCategories?.[0] || 'Math'}
                     </span>
                   </div>
