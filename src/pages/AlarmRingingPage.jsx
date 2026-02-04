@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAlarm } from '../hooks/useAlarm';
 import { useSettings } from '../hooks/useSettings';
-import { useLLM } from '../hooks/useLLM';
 import SwipeToStart from '../components/alarm/SwipeToStart';
 import QuestionCard from '../components/alarm/QuestionCard';
 import KillSwitchModal from '../components/alarm/KillSwitchModal';
@@ -11,6 +10,9 @@ import AlarmFailure from '../components/alarm/AlarmFailure';
 import { getRandomFallbackQuestions } from '../services/llm/fallbackQuestions';
 import { DIFFICULTY, MAX_WRONG_ANSWERS, MAX_RING_DURATION_MS } from '../utils/constants';
 import { resetAlarmFiring } from '../services/alarm/alarmTimer';
+import { getQuestionSet, deleteQuestionSet, getRequiredQuestionCount } from '../services/storage/questionStorage';
+import { generateQuestionsForAlarm } from '../services/alarm/alarmManager';
+import { getAlarm } from '../services/storage/alarmStorage';
 
 const STATES = {
   RINGING: 'ringing',
@@ -32,7 +34,6 @@ export default function AlarmRingingPage() {
   } = useAlarm();
 
   const { settings } = useSettings();
-  const { generateQuestions, isReady: isLLMReady } = useLLM();
 
   // State
   const [state, setState] = useState(STATES.RINGING);
@@ -101,53 +102,41 @@ export default function AlarmRingingPage() {
     };
   }, []);
 
-  // Load questions when transitioning to questioning state
-  const loadQuestions = useCallback(async (count) => {
-    console.log('[AlarmRinging] loadQuestions called, count:', count);
+  // Load pre-generated questions from storage (NO LLM calls during alarm!)
+  const loadQuestions = useCallback(() => {
+    console.log('[AlarmRinging] Loading pre-generated questions from storage...');
+
+    // Try to get pre-generated questions from storage
+    const questionSet = getQuestionSet();
+
+    if (questionSet && questionSet.questions && questionSet.questions.length > 0) {
+      console.log('[AlarmRinging] Using pre-generated questions:', questionSet.questions.length, 'source:', questionSet.source);
+      setQuestions(questionSet.questions);
+      return questionSet.questions;
+    }
+
+    // Fallback: use hardcoded questions (instant, no waiting)
+    console.log('[AlarmRinging] No pre-generated questions found, using fallback');
     const categories = settings.selectedCategories || ['math'];
-    console.log('[AlarmRinging] Categories:', categories, 'LLM Ready:', isLLMReady);
+    const count = getRequiredQuestionCount(difficulty);
+    const fallbackQuestions = getRandomFallbackQuestions(categories, count);
+    setQuestions(fallbackQuestions);
+    return fallbackQuestions;
+  }, [settings.selectedCategories, difficulty]);
 
-    // Try to generate with LLM, fallback to pre-written
-    let loadedQuestions;
-    if (isLLMReady) {
-      try {
-        loadedQuestions = await generateQuestions(categories, count + 5); // Load extra for wrong answers
-        console.log('[AlarmRinging] LLM generated questions:', loadedQuestions?.length || 0);
-      } catch (error) {
-        console.error('[AlarmRinging] LLM question generation failed:', error);
-      }
-    }
+  // Handle swipe to dismiss - loads questions instantly (no waiting!)
+  const handleDismiss = useCallback(() => {
+    console.log('[AlarmRinging] handleDismiss called, loading pre-generated questions...');
 
-    if (!loadedQuestions || loadedQuestions.length === 0) {
-      console.log('[AlarmRinging] Using fallback questions');
-      loadedQuestions = getRandomFallbackQuestions(categories, count + 5);
-    }
+    // Load questions instantly from storage (synchronous)
+    loadQuestions();
 
-    console.log('[AlarmRinging] Final questions loaded:', loadedQuestions?.length || 0);
-    setQuestions(loadedQuestions);
-  }, [settings.selectedCategories, isLLMReady, generateQuestions]);
-
-  // Handle swipe to dismiss
-  const handleDismiss = useCallback(async () => {
-    console.log('[AlarmRinging] handleDismiss called, loading questions...');
-    try {
-      await loadQuestions(requiredCorrect);
-      console.log('[AlarmRinging] Questions loaded, transitioning to QUESTIONING state');
-      setCurrentQuestionIndex(0);
-      setCorrectCount(0);
-      setWrongCount(0);
-      setState(STATES.QUESTIONING);
-    } catch (error) {
-      console.error('[AlarmRinging] Error in handleDismiss:', error);
-      // Still try to proceed with fallback questions
-      const fallbackQuestions = getRandomFallbackQuestions(['math'], requiredCorrect + 5);
-      setQuestions(fallbackQuestions);
-      setCurrentQuestionIndex(0);
-      setCorrectCount(0);
-      setWrongCount(0);
-      setState(STATES.QUESTIONING);
-    }
-  }, [loadQuestions, requiredCorrect]);
+    console.log('[AlarmRinging] Questions loaded, transitioning to QUESTIONING state');
+    setCurrentQuestionIndex(0);
+    setCorrectCount(0);
+    setWrongCount(0);
+    setState(STATES.QUESTIONING);
+  }, [loadQuestions]);
 
   // Handle answer
   const handleAnswer = useCallback((isCorrect) => {
@@ -222,6 +211,17 @@ export default function AlarmRingingPage() {
     resetAlarmFiring();
     // Clear session storage
     sessionStorage.removeItem('wakeai_active_alarm');
+
+    // Delete used questions and regenerate fresh ones for next alarm (async, background)
+    deleteQuestionSet();
+    const currentAlarm = getAlarm();
+    if (currentAlarm && currentAlarm.enabled) {
+      console.log('[AlarmRinging] Regenerating questions after kill switch...');
+      generateQuestionsForAlarm(currentAlarm).catch(e => {
+        console.log('[AlarmRinging] Background question regeneration failed:', e);
+      });
+    }
+
     navigate('/', { replace: true });
   }, [dismiss, navigate]);
 
@@ -231,6 +231,17 @@ export default function AlarmRingingPage() {
     resetAlarmFiring();
     // Clear session storage
     sessionStorage.removeItem('wakeai_active_alarm');
+
+    // Delete used questions and regenerate fresh ones for next alarm (async, background)
+    deleteQuestionSet();
+    const currentAlarm = getAlarm();
+    if (currentAlarm && currentAlarm.enabled) {
+      console.log('[AlarmRinging] Regenerating questions for next alarm...');
+      generateQuestionsForAlarm(currentAlarm).catch(e => {
+        console.log('[AlarmRinging] Background question regeneration failed:', e);
+      });
+    }
+
     navigate('/', { replace: true });
   }, [navigate]);
 
