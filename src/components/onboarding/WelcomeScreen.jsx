@@ -2,7 +2,7 @@ export default function WelcomeScreen({ onNext }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-full px-6 py-12 text-center bg-[#050505]">
       <div className="mb-8">
-        <div className="w-28 h-28 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-[#FF6B6B] to-[#E85D5D] flex items-center justify-center p-4 shadow-lg shadow-[#FF6B6B]/20">
+        <div className="w-28 h-28 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-[#FF6B6B] to-[#E85D5D] flex items-center justify-center shadow-lg shadow-[#FF6B6B]/20">
           <img
             src='/assets/images/logo.png'
             alt="WakeAI"
