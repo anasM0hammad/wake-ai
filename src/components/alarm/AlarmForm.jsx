@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import TimePicker from '../common/TimePicker';
 import { DIFFICULTY } from '../../utils/constants';
 import { usePremium } from '../../hooks/usePremium';
@@ -9,21 +9,11 @@ export default function AlarmForm({
   onCancel,
   isOpen
 }) {
-  const [time, setTime] = useState('07:00');
-  const [difficulty, setDifficulty] = useState('EASY');
+  // Initialize directly from alarm prop - component remounts fresh each time it opens
+  const [time, setTime] = useState(alarm?.time || '07:00');
+  const [difficulty, setDifficulty] = useState(alarm?.difficulty || 'EASY');
 
   const { isPremium, triggerUpsell } = usePremium();
-
-  // Initialize form when alarm changes or form opens
-  useEffect(() => {
-    if (alarm) {
-      setTime(alarm.time || '07:00');
-      setDifficulty(alarm.difficulty || 'EASY');
-    } else {
-      setTime('07:00');
-      setDifficulty('EASY');
-    }
-  }, [alarm, isOpen]);
 
   const handleDifficultySelect = (level) => {
     const difficultyInfo = DIFFICULTY[level];

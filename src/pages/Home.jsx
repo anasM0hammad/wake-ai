@@ -309,16 +309,18 @@ export default function Home() {
         </div>
       )}
 
-      {/* Alarm Form Modal */}
-      <AlarmForm
-        alarm={editingAlarm}
-        onSave={handleSaveAlarm}
-        onCancel={() => {
-          setShowAlarmForm(false);
-          setEditingAlarm(null);
-        }}
-        isOpen={showAlarmForm}
-      />
+      {/* Alarm Form Modal - Conditionally rendered to reset state on each open */}
+      {showAlarmForm && (
+        <AlarmForm
+          alarm={alarm}
+          onSave={handleSaveAlarm}
+          onCancel={() => {
+            setShowAlarmForm(false);
+            setEditingAlarm(null);
+          }}
+          isOpen={showAlarmForm}
+        />
+      )}
 
       {/* Premium Upsell Modal */}
       <PremiumUpsell

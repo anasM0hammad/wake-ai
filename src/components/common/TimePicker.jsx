@@ -1,23 +1,27 @@
 import { useState, useEffect, useRef } from 'react';
 
 export default function TimePicker({ value, onChange, className = '' }) {
-  const [hours, setHours] = useState(7);
-  const [minutes, setMinutes] = useState(0);
-  const [isPM, setIsPM] = useState(false);
+  const [hours, setHours] = useState(() => {
+    if (!value) return 7;
+    const h = parseInt(value.split(':')[0], 10);
+    if (h === 0) return 12;
+    if (h > 12) return h - 12;
+    return h;
+  });
+
+  const [minutes, setMinutes] = useState(() => {
+    if (!value) return 0;
+    return parseInt(value.split(':')[1], 10) || 0;
+  });
+
+  const [isPM, setIsPM] = useState(() => {
+    if (!value) return false;
+    const h = parseInt(value.split(':')[0], 10);
+    return h >= 12;
+  });
 
   const hoursRef = useRef(null);
   const minutesRef = useRef(null);
-
-  // Parse initial value
-  useEffect(() => {
-    if (value) {
-      const [h, m] = value.split(':').map(Number);
-      const hour12 = h % 12 || 12;
-      setHours(hour12);
-      setMinutes(m);
-      setIsPM(h >= 12);
-    }
-  }, []);
 
   // Emit change in 24-hour format
   useEffect(() => {
