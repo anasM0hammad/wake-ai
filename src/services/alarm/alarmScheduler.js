@@ -15,7 +15,7 @@ export async function setupNotificationChannel() {
       description: 'Alarm notifications for WakeAI',
       importance: 5, // Max importance
       visibility: 1, // Public
-      sound: 'alarm_sound.wav',
+      sound: 'gentle.mp3',
       vibration: true,
       lights: true,
       lightColor: '#FF0000'
@@ -83,7 +83,7 @@ export async function scheduleAlarm(alarm) {
             allowWhileIdle: true
           },
           channelId: ALARM_CHANNEL_ID,
-          sound: 'alarm_sound.wav',
+          sound: 'gentle.mp3',
           actionTypeId: 'ALARM_ACTION',
           extra: {
             alarmId: alarm.id,

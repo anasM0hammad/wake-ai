@@ -28,6 +28,32 @@ export async function hasRequiredPermissions() {
   return notificationPerm === 'granted';
 }
 
+/**
+ * Request exact alarm permission (Android 12+).
+ * On Android 14+ with USE_EXACT_ALARM declared in manifest, this is auto-granted.
+ * On Android 12-13, SCHEDULE_EXACT_ALARM needs user to enable it in system settings.
+ * We request notification permission first since it's a prerequisite, then let
+ * the allowWhileIdle flag on the notification handle Doze mode wakeup.
+ */
+export async function requestExactAlarmPermission() {
+  try {
+    const info = await Device.getInfo();
+    if (info.platform !== 'android') {
+      return true;
+    }
+
+    const notifPerm = await checkNotificationPermission();
+    if (notifPerm !== 'granted') {
+      await requestNotificationPermission();
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Failed to request exact alarm permission:', error);
+    return false;
+  }
+}
+
 // Battery Optimization
 // Note: Full implementation requires native Android code
 // These functions provide the interface and fallback behavior
