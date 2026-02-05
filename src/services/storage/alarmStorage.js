@@ -9,7 +9,8 @@ const ALARM_KEY = 'wakeai_alarm';
  *   time: string (HH:MM 24-hour format),
  *   difficulty: string (EASY/MEDIUM/HARD),
  *   enabled: boolean,
- *   createdAt: number (timestamp)
+ *   createdAt: number (timestamp),
+ *   lastFiredDate: string|null (YYYY-MM-DD, set when alarm fires to prevent same-day re-trigger)
  * }
  */
 
@@ -24,6 +25,14 @@ export function saveAlarm(alarm) {
 
 export function deleteAlarm() {
   remove(ALARM_KEY);
+}
+
+export function updateAlarmField(field, value) {
+  const alarm = getAlarm();
+  if (!alarm) return null;
+  const updated = { ...alarm, [field]: value };
+  saveAlarm(updated);
+  return updated;
 }
 
 export function isAlarmEnabled() {
@@ -45,6 +54,7 @@ export default {
   getAlarm,
   saveAlarm,
   deleteAlarm,
+  updateAlarmField,
   isAlarmEnabled,
   toggleAlarm
 };

@@ -32,7 +32,7 @@ export default function Home() {
   useEffect(() => {
     if (alarm?.enabled) {
       const updateTime = () => {
-        const nextAlarm = getNextAlarmDate(alarm.time);
+        const nextAlarm = getNextAlarmDate(alarm.time, alarm.lastFiredDate || null);
         setTimeUntil(getTimeUntilAlarm(nextAlarm));
       };
       updateTime();

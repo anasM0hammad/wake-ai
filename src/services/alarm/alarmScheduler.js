@@ -69,8 +69,13 @@ export async function scheduleAlarm(alarm) {
     // Cancel any existing notification for this alarm
     await cancelAlarm(alarm.id);
 
-    const alarmDate = getNextAlarmDate(alarm.time);
+    const alarmDate = getNextAlarmDate(alarm.time, alarm.lastFiredDate || null);
     const notificationId = hashStringToInt(alarm.id);
+
+    // Store the scheduled date string so we can track which day this fires
+    const scheduledDateStr = `${alarmDate.getFullYear()}-${String(alarmDate.getMonth() + 1).padStart(2, '0')}-${String(alarmDate.getDate()).padStart(2, '0')}`;
+
+    console.log(`Scheduling alarm for: ${alarmDate.toISOString()} (${scheduledDateStr})`);
 
     await LocalNotifications.schedule({
       notifications: [
@@ -89,6 +94,7 @@ export async function scheduleAlarm(alarm) {
             alarmId: alarm.id,
             time: alarm.time,
             difficulty: alarm.difficulty,
+            scheduledDate: scheduledDateStr,
             type: 'alarm'
           },
           ongoing: true,
@@ -137,15 +143,17 @@ export async function getScheduledAlarms() {
   }
 }
 
-// Convert string ID to integer for notification ID
+// Convert string ID to a positive 32-bit integer for notification ID
 function hashStringToInt(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
+    hash = hash | 0; // Force 32-bit integer
   }
-  return Math.abs(hash);
+  // Ensure positive, non-zero, and within 32-bit signed int range
+  const result = Math.abs(hash) % 2147483647;
+  return result === 0 ? 1 : result;
 }
 
 export default {

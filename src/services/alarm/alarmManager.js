@@ -1,13 +1,15 @@
 import {
   getAlarm,
   saveAlarm,
-  deleteAlarm as deleteStoredAlarm
+  deleteAlarm as deleteStoredAlarm,
+  updateAlarmField
 } from '../storage/alarmStorage';
 import {
   scheduleAlarm,
   cancelAlarm
 } from './alarmScheduler';
 import { getSettings } from '../storage/settingsStorage';
+import { getTodayDateString } from '../../utils/timeUtils';
 
 // Session state
 let currentSession = null;
@@ -107,6 +109,9 @@ export function clearActiveAlarm() {
 // Alarm session management
 
 export function startAlarmSession(alarm) {
+  // Mark the alarm as having fired today so it won't re-trigger
+  updateAlarmField('lastFiredDate', getTodayDateString());
+
   currentSession = {
     alarmId: alarm.id,
     alarm,
@@ -179,6 +184,20 @@ export function getSessionDuration() {
   return Date.now() - currentSession.startedAt;
 }
 
+/**
+ * Reschedule the alarm for the next day.
+ * Reads the current alarm from storage (which now has lastFiredDate set)
+ * and re-schedules it. getNextAlarmDate will see lastFiredDate === today
+ * and automatically return tomorrow.
+ */
+export async function rescheduleAlarmForNextDay() {
+  const alarm = getAlarm();
+  if (!alarm || !alarm.enabled) return null;
+
+  const success = await scheduleAlarm(alarm);
+  return success ? alarm : null;
+}
+
 export default {
   // CRUD
   createAlarm,
@@ -198,5 +217,6 @@ export default {
   getCurrentSession,
   isSessionActive,
   setSessionStatus,
-  getSessionDuration
+  getSessionDuration,
+  rescheduleAlarmForNextDay
 };

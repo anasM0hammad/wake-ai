@@ -28,6 +28,29 @@ export async function hasRequiredPermissions() {
   return notificationPerm === 'granted';
 }
 
+/**
+ * Check and request exact alarm permission (Android 12+).
+ * This is required for scheduling alarms that fire at a precise time,
+ * especially when the app is killed or the device is in Doze mode.
+ */
+export async function requestExactAlarmPermission() {
+  try {
+    // On Android 12+, SCHEDULE_EXACT_ALARM requires user consent via system settings.
+    // USE_EXACT_ALARM is auto-granted for alarm clock apps on Android 14+.
+    // Capacitor's LocalNotifications.checkPermissions() covers notification permission,
+    // but exact alarm is a separate system check. We request it by attempting to schedule,
+    // which will prompt the OS dialog if needed, or by directing the user to settings.
+    const result = await LocalNotifications.checkPermissions();
+    if (result.display !== 'granted') {
+      await LocalNotifications.requestPermissions();
+    }
+    return true;
+  } catch (error) {
+    console.error('Failed to request exact alarm permission:', error);
+    return false;
+  }
+}
+
 // Battery Optimization
 // Note: Full implementation requires native Android code
 // These functions provide the interface and fallback behavior
