@@ -9,7 +9,8 @@ import {
   endAlarmSession,
   updateSessionProgress,
   getCurrentSession,
-  isSessionActive
+  isSessionActive,
+  rescheduleAlarmForNextDay
 } from '../services/alarm/alarmManager';
 import {
   setupNotificationChannel,
@@ -122,6 +123,18 @@ export function useAlarm() {
           recordFail(questionsAnswered, questionsCorrect);
           break;
       }
+    }
+
+    // Reschedule alarm for next day.
+    // lastFiredDate was set to today in startAlarmSession,
+    // so getNextAlarmDate will return tomorrow.
+    try {
+      const rescheduled = await rescheduleAlarmForNextDay();
+      if (rescheduled) {
+        setAlarm(getAlarm());
+      }
+    } catch (error) {
+      console.error('Failed to reschedule alarm:', error);
     }
 
     return sessionSummary;

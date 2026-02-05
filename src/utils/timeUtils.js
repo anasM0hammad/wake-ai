@@ -31,24 +31,43 @@ export function parseTime(timeString) {
 }
 
 /**
- * Get the next Date when alarm should fire
- * Always treats alarm as one-time: today if time hasn't passed, otherwise tomorrow
+ * Get today's date as YYYY-MM-DD string
+ */
+export function getTodayDateString() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Get the next Date when alarm should fire.
+ *
+ * If lastFiredDate equals today, the alarm already rang today — schedule for tomorrow.
+ * Otherwise: today if time hasn't passed, tomorrow if it has.
+ *
  * @param {string} time - Time in HH:MM format
+ * @param {string|null} lastFiredDate - YYYY-MM-DD of last fire, prevents same-day re-trigger
  * @returns {Date} Next alarm date
  */
-export function getNextAlarmDate(time) {
+export function getNextAlarmDate(time, lastFiredDate = null) {
   const { hours, minutes } = parseTime(time);
   const now = new Date();
 
-  // Create a date for today with the alarm time
   const alarmToday = new Date(now);
   alarmToday.setHours(hours, minutes, 0, 0);
 
-  // If alarm time has passed today, schedule for tomorrow
+  // Already fired today — always schedule for tomorrow
+  if (lastFiredDate && lastFiredDate === getTodayDateString()) {
+    const tomorrow = new Date(alarmToday);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow;
+  }
+
+  // Time hasn't passed yet — schedule for today
   if (alarmToday > now) {
     return alarmToday;
   }
 
+  // Time already passed — schedule for tomorrow
   const tomorrow = new Date(alarmToday);
   tomorrow.setDate(tomorrow.getDate() + 1);
   return tomorrow;
@@ -154,6 +173,7 @@ export function getMsUntilTime(alarmDate) {
 export default {
   formatTime,
   parseTime,
+  getTodayDateString,
   getNextAlarmDate,
   getTimeUntilAlarm,
   shouldPreloadQuestions,

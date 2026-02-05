@@ -17,6 +17,7 @@ import {
 } from '../storage/questionStorage';
 import { generateQuestionSet } from '../llm/questionService';
 import { getRandomFallbackQuestions } from '../llm/fallbackQuestions';
+import { getTodayDateString } from '../../utils/timeUtils';
 
 // Session state
 let currentSession = null;
@@ -106,10 +107,15 @@ export async function updateAlarm(id, updates) {
 
   const previousDifficulty = existingAlarm.difficulty;
 
+  // If the alarm time changed, clear lastFiredDate so the new time
+  // can fire today instead of being forced to tomorrow
+  const timeChanged = updates.time && updates.time !== existingAlarm.time;
+
   const updatedAlarm = {
     ...existingAlarm,
     ...updates,
-    id // Ensure ID doesn't change
+    id, // Ensure ID doesn't change
+    ...(timeChanged ? { lastFiredDate: null } : {})
   };
 
   saveAlarm(updatedAlarm);
@@ -203,6 +209,13 @@ export function clearActiveAlarm() {
 // Alarm session management
 
 export function startAlarmSession(alarm) {
+  // Mark alarm as fired today so it won't re-trigger after dismiss
+  const storedAlarm = getAlarm();
+  if (storedAlarm && storedAlarm.id === alarm.id) {
+    const updated = { ...storedAlarm, lastFiredDate: getTodayDateString() };
+    saveAlarm(updated);
+  }
+
   currentSession = {
     alarmId: alarm.id,
     alarm,
@@ -278,6 +291,19 @@ export function getSessionDuration() {
 // Export the question generation function for use after alarm session ends
 export { generateQuestionsForAlarm };
 
+/**
+ * Reschedule the alarm for the next day after dismiss.
+ * Reads the stored alarm (which has lastFiredDate = today),
+ * so getNextAlarmDate will return tomorrow automatically.
+ */
+export async function rescheduleAlarmForNextDay() {
+  const alarm = getAlarm();
+  if (!alarm || !alarm.enabled) return null;
+
+  const success = await scheduleAlarm(alarm);
+  return success ? alarm : null;
+}
+
 export default {
   // CRUD
   createAlarm,
@@ -300,5 +326,6 @@ export default {
   getSessionDuration,
 
   // Questions
-  generateQuestionsForAlarm
+  generateQuestionsForAlarm,
+  rescheduleAlarmForNextDay
 };
