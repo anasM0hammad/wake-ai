@@ -59,6 +59,15 @@ export async function setupNotificationListeners() {
   }
 }
 
+export async function removeNotificationListeners() {
+  try {
+    await LocalNotifications.removeAllListeners();
+    notificationListenerRegistered = false;
+  } catch (error) {
+    console.error('Failed to remove notification listeners:', error);
+  }
+}
+
 export async function scheduleAlarm(alarm) {
   if (!alarm || !alarm.id || !alarm.time) {
     console.error('Invalid alarm data');
@@ -151,6 +160,7 @@ function hashStringToInt(str) {
 export default {
   setupNotificationChannel,
   setupNotificationListeners,
+  removeNotificationListeners,
   setOnAlarmTrigger,
   scheduleAlarm,
   cancelAlarm,

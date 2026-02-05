@@ -71,7 +71,6 @@
 import { useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
-import { LocalNotifications } from '@capacitor/local-notifications';
 import { Home, Onboarding, AlarmRingingPage, Settings, Dashboard } from './pages';
 import { ErrorBoundary, AlarmErrorBoundary } from './components/common';
 import AlarmMonitor from './components/AlarmMonitor';
@@ -80,7 +79,7 @@ import { getSettings } from './services/storage/settingsStorage';
 import { initializeModel } from './services/llm/webllm';
 import { initializeBackgroundService, cleanupBackgroundService } from './services/alarm/backgroundService';
 import { checkAndPreloadQuestions } from './services/llm/preloadManager';
-import { setupNotificationChannel, setOnAlarmTrigger } from './services/alarm/alarmScheduler';
+import { setupNotificationChannel, setOnAlarmTrigger, removeNotificationListeners } from './services/alarm/alarmScheduler';
 
 // Inner component that has access to navigation
 function AppContent() {
@@ -97,6 +96,7 @@ function AppContent() {
 
     return () => {
       cleanupBackgroundService();
+      removeNotificationListeners();
     };
   }, []);
 
@@ -131,27 +131,9 @@ function AppContent() {
   };
 
   const setupNotificationListeners = () => {
-    // Handle notification received while app is open
-    LocalNotifications.addListener('localNotificationReceived', (notification) => {
-      console.log('Notification received:', notification);
-
-      const extra = notification.extra;
-      if (extra?.type === 'alarm' || extra?.type === 'snooze') {
-        handleAlarmTrigger(extra);
-      }
-    });
-
-    // Handle notification tap (app opened from notification)
-    LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
-      console.log('Notification action performed:', action);
-
-      const extra = action.notification.extra;
-      if (extra?.type === 'alarm' || extra?.type === 'snooze') {
-        handleAlarmTrigger(extra);
-      }
-    });
-
-    // Set up callback for alarm trigger from scheduler
+    // Set up callback for alarm trigger from scheduler.
+    // Notification listeners are registered once in alarmScheduler.js
+    // (via setupNotificationListeners) — do NOT add duplicate listeners here.
     setOnAlarmTrigger((alarmData) => {
       handleAlarmTrigger(alarmData);
     });
