@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
   checkNotificationPermission,
-  requestNotificationPermission
+  requestNotificationPermission,
+  requestExactAlarmPermission
 } from '../../utils/permissions';
 
 export default function PermissionRequest({ onNext, onBack }) {
@@ -21,6 +22,12 @@ export default function PermissionRequest({ onNext, onBack }) {
     setIsRequesting(true);
     const result = await requestNotificationPermission();
     setPermissionStatus(result);
+
+    // Also request exact alarm permission (needed for reliable alarm scheduling)
+    if (result === 'granted') {
+      await requestExactAlarmPermission();
+    }
+
     setIsRequesting(false);
   };
 

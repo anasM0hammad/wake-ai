@@ -33,6 +33,13 @@ export const startAlarmMonitor = (onAlarmFire) => {
 
     if (!alarm || !alarm.enabled) return;
 
+    // Skip if alarm already fired today (consistent with getNextAlarmDate lastFiredDate logic)
+    if (alarm.lastFiredDate) {
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      if (alarm.lastFiredDate === todayStr) return;
+    }
+
     const now = new Date();
     const currentHours = now.getHours();
     const currentMinutes = now.getMinutes();
@@ -107,8 +114,9 @@ export const getTimeUntilAlarm = () => {
   const alarmTime = new Date(now);
   alarmTime.setHours(alarmHours, alarmMinutes, 0, 0);
 
-  // If alarm time has passed today, it's for tomorrow
-  if (alarmTime <= now) {
+  // If alarm already fired today or time has passed, it's for tomorrow
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  if (alarm.lastFiredDate === todayStr || alarmTime <= now) {
     alarmTime.setDate(alarmTime.getDate() + 1);
   }
 
