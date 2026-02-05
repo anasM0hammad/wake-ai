@@ -69,7 +69,7 @@ export async function scheduleAlarm(alarm) {
     // Cancel any existing notification for this alarm
     await cancelAlarm(alarm.id);
 
-    const alarmDate = getNextAlarmDate(alarm.time);
+    const alarmDate = getNextAlarmDate(alarm.time, alarm.lastFiredDate || null);
     const notificationId = hashStringToInt(alarm.id);
 
     await LocalNotifications.schedule({
