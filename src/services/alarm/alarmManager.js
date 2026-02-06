@@ -16,6 +16,7 @@ import {
   getRequiredQuestionCount
 } from '../storage/questionStorage';
 import { generateQuestionSet } from '../llm/questionService';
+import { unloadModel } from '../llm/webllm';
 import { getRandomFallbackQuestions } from '../llm/fallbackQuestions';
 import { getTodayDateString } from '../../utils/timeUtils';
 
@@ -69,6 +70,12 @@ async function generateQuestionsForAlarm(alarm) {
       questions: fallbackQs,
       generatedAt: Date.now(),
       source: 'fallback'
+    });
+  } finally {
+    // Unload model after question generation to free memory
+    console.log('[AlarmManager] Unloading LLM model to free memory');
+    unloadModel().catch(e => {
+      console.warn('[AlarmManager] Failed to unload model:', e);
     });
   }
 }

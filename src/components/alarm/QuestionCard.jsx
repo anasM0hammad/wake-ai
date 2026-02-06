@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const CATEGORY_COLORS = {
   math: { bg: 'bg-[#10B981]/10', text: 'text-[#34D399]' },
@@ -16,6 +16,13 @@ export default function QuestionCard({
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [showFeedback, setShowFeedback] = useState(null); // 'correct' | 'wrong' | null
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // Reset state when question changes
+  useEffect(() => {
+    setSelectedIndex(null);
+    setShowFeedback(null);
+    setIsAnimating(false);
+  }, [question]);
 
   if (!question) {
     return (
