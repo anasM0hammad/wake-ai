@@ -49,6 +49,9 @@ export default function AlarmRingingPage() {
 
   const timeoutRef = useRef(null);
   const alarmDataRef = useRef(null);
+  // Refs to track counts for timeout callback (avoids stale closure)
+  const correctCountRef = useRef(0);
+  const wrongCountRef = useRef(0);
 
   // Get alarm data from route state, sessionStorage, or current alarm
   const getAlarmData = () => {
@@ -135,6 +138,9 @@ export default function AlarmRingingPage() {
     setCurrentQuestionIndex(0);
     setCorrectCount(0);
     setWrongCount(0);
+    // Reset refs too
+    correctCountRef.current = 0;
+    wrongCountRef.current = 0;
     setState(STATES.QUESTIONING);
   }, [loadQuestions]);
 
@@ -145,6 +151,7 @@ export default function AlarmRingingPage() {
     if (isCorrect) {
       const newCorrectCount = correctCount + 1;
       setCorrectCount(newCorrectCount);
+      correctCountRef.current = newCorrectCount;
 
       // Check if we've reached the required correct answers
       if (newCorrectCount >= requiredCorrect) {
@@ -156,6 +163,7 @@ export default function AlarmRingingPage() {
     } else {
       const newWrongCount = wrongCount + 1;
       setWrongCount(newWrongCount);
+      wrongCountRef.current = newWrongCount;
 
       // Check max wrong answers
       if (newWrongCount >= MAX_WRONG_ANSWERS) {
@@ -165,30 +173,32 @@ export default function AlarmRingingPage() {
         setCurrentQuestionIndex(prev => prev + 1);
       }
     }
-  }, [correctCount, wrongCount, requiredCorrect, answerQuestion]);
+  }, [correctCount, wrongCount, requiredCorrect, answerQuestion, handleSuccess, handleFailure]);
 
   // Handle success
   const handleSuccess = useCallback(async () => {
     clearTimeout(timeoutRef.current);
 
+    // Use refs to get current values (avoids stale closure issues)
     const stats = {
-      questionsAnswered: correctCount + wrongCount + 1,
-      questionsCorrect: correctCount + 1,
+      questionsAnswered: correctCountRef.current + wrongCountRef.current + 1,
+      questionsCorrect: correctCountRef.current + 1,
       duration: Date.now() - startTime
     };
 
     setSessionStats(stats);
     await dismiss('win');
     setState(STATES.SUCCESS);
-  }, [correctCount, wrongCount, startTime, dismiss]);
+  }, [startTime, dismiss]);
 
   // Handle failure
   const handleFailure = useCallback(async (reason) => {
     clearTimeout(timeoutRef.current);
 
+    // Use refs to get current values (avoids stale closure issues with timeout)
     const stats = {
-      questionsAnswered: correctCount + wrongCount,
-      questionsCorrect: correctCount,
+      questionsAnswered: correctCountRef.current + wrongCountRef.current,
+      questionsCorrect: correctCountRef.current,
       duration: Date.now() - startTime
     };
 
@@ -196,7 +206,7 @@ export default function AlarmRingingPage() {
     setFailureReason(reason);
     await dismiss('fail');
     setState(STATES.FAILURE);
-  }, [correctCount, wrongCount, startTime, dismiss]);
+  }, [startTime, dismiss]);
 
   // Handle timeout
   const handleTimeout = useCallback(() => {
