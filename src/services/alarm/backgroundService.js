@@ -22,6 +22,9 @@ import { App } from '@capacitor/app';
 import { checkAndPreloadQuestions } from '../llm/preloadManager';
 
 let foregroundCheckInterval = null;
+// Track listener handles for proper cleanup (avoid removing unrelated listeners)
+let appStateChangeListener = null;
+let appUrlOpenListener = null;
 const FOREGROUND_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
 /**
@@ -29,7 +32,7 @@ const FOREGROUND_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
  */
 export async function initializeBackgroundService() {
   // Set up app state listeners
-  setupAppStateListeners();
+  await setupAppStateListeners();
 
   // Start foreground checking
   startForegroundChecks();
@@ -43,9 +46,9 @@ export async function initializeBackgroundService() {
 /**
  * Set up listeners for app lifecycle events
  */
-function setupAppStateListeners() {
+async function setupAppStateListeners() {
   // Listen for app state changes
-  App.addListener('appStateChange', async ({ isActive }) => {
+  appStateChangeListener = await App.addListener('appStateChange', async ({ isActive }) => {
     if (isActive) {
       // App came to foreground
       console.log('App resumed - checking preload');
@@ -58,7 +61,7 @@ function setupAppStateListeners() {
   });
 
   // Listen for app resume from URL (deep links, notifications)
-  App.addListener('appUrlOpen', async (event) => {
+  appUrlOpenListener = await App.addListener('appUrlOpen', async (event) => {
     console.log('App opened via URL:', event.url);
     await onAppResume();
   });
@@ -157,10 +160,20 @@ export async function registerBackgroundTask() {
 
 /**
  * Cleanup function for unmounting
+ * Only removes listeners registered by this service (not ALL app listeners)
  */
-export function cleanupBackgroundService() {
+export async function cleanupBackgroundService() {
   stopForegroundChecks();
-  App.removeAllListeners();
+
+  // Remove only the listeners we registered
+  if (appStateChangeListener) {
+    await appStateChangeListener.remove();
+    appStateChangeListener = null;
+  }
+  if (appUrlOpenListener) {
+    await appUrlOpenListener.remove();
+    appUrlOpenListener = null;
+  }
 }
 
 export default {

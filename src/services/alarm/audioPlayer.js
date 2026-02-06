@@ -1,4 +1,4 @@
-import { Howl } from 'howler';
+import { Howl, Howler } from 'howler';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 const TONE_PATH = '/assets/tones';

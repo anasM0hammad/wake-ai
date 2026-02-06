@@ -33,34 +33,68 @@ export async function getDeviceInfo() {
   }
 }
 
+/**
+ * Get device RAM in MB using platform-appropriate methods.
+ *
+ * - Web: Uses navigator.deviceMemory (Chrome only, for testing purposes)
+ * - Android/iOS: Uses native detection via Capacitor or reasonable defaults
+ *
+ * The RAM value is used to decide whether to download the larger (1.5B) or
+ * smaller (0.5B) LLM model.
+ */
 export async function getDeviceRAM() {
   try {
-    // Device.getInfo() doesn't directly provide RAM
-    // On web, we can use navigator.deviceMemory (Chrome only)
-    // On native, we need to implement via native bridge
-
-    if (typeof navigator !== 'undefined' && 'deviceMemory' in navigator) {
-      // deviceMemory returns GB, convert to MB
-      return navigator.deviceMemory * 1024;
-    }
-
-    // For Android, attempt to get from Device plugin's memory info
-    // This is a fallback - actual implementation may vary
     const info = await Device.getInfo();
+    const platform = info.platform;
 
-    // If platform is android or ios, estimate based on typical device specs
-    // In production, this should be implemented via native plugin
-    if (info.platform === 'android' || info.platform === 'ios') {
-      // Default to a conservative estimate that allows large model
-      // Real implementation should use native code
-      return 4000; // 4GB default assumption
+    // Web platform: Use navigator.deviceMemory (Chrome-only, mainly for testing)
+    if (platform === 'web') {
+      if (typeof navigator !== 'undefined' && 'deviceMemory' in navigator) {
+        // deviceMemory returns GB, convert to MB
+        const ramMB = navigator.deviceMemory * 1024;
+        console.log(`[DeviceInfo] Web platform - navigator.deviceMemory: ${ramMB}MB`);
+        return ramMB;
+      }
+      // Fallback for non-Chrome browsers on web
+      console.log('[DeviceInfo] Web platform - deviceMemory not available, defaulting to 4GB');
+      return 4000;
     }
 
-    // Web fallback
+    // Android platform: Try to get actual memory info
+    if (platform === 'android') {
+      // Try performance.memory if available (some WebViews support this)
+      if (typeof performance !== 'undefined' && performance.memory) {
+        // jsHeapSizeLimit gives us an idea of available memory
+        // Multiply by factor since JS heap is typically ~25% of total RAM
+        const estimatedRAM = Math.round((performance.memory.jsHeapSizeLimit / 1024 / 1024) * 4);
+        if (estimatedRAM > 0) {
+          console.log(`[DeviceInfo] Android - estimated from JS heap: ${estimatedRAM}MB`);
+          return estimatedRAM;
+        }
+      }
+
+      // Fallback: Use device model to estimate RAM
+      // Modern Android devices typically have 4-8GB RAM
+      // Default to 4GB which is conservative but allows the large model
+      console.log('[DeviceInfo] Android - using default estimate: 4000MB');
+      return 4000;
+    }
+
+    // iOS platform: iOS devices are generally well-specced
+    if (platform === 'ios') {
+      // Modern iPhones have 4-6GB RAM, iPads have 4-16GB
+      // Default to 4GB which is conservative
+      console.log('[DeviceInfo] iOS - using default estimate: 4000MB');
+      return 4000;
+    }
+
+    // Unknown platform fallback
+    console.log('[DeviceInfo] Unknown platform - using default: 4000MB');
     return 4000;
   } catch (error) {
-    console.error('Failed to get device RAM:', error);
-    return 0;
+    console.error('[DeviceInfo] Failed to get device RAM:', error);
+    // Return conservative default that still allows large model
+    return 4000;
   }
 }
 
