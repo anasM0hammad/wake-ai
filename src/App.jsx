@@ -78,7 +78,6 @@ import { isOnboardingComplete } from './services/storage/settingsStorage';
 import { getSettings } from './services/storage/settingsStorage';
 import { initializeModel } from './services/llm/webllm';
 import { initializeBackgroundService, cleanupBackgroundService } from './services/alarm/backgroundService';
-import { checkAndPreloadQuestions } from './services/llm/preloadManager';
 import { setupNotificationChannel, setOnAlarmTrigger, removeNotificationListeners } from './services/alarm/alarmScheduler';
 
 // Inner component that has access to navigation
@@ -124,8 +123,8 @@ function AppContent() {
       });
     }
 
-    // Initial preload check
-    await checkAndPreloadQuestions();
+    // Note: Initial preload check is handled by initializeBackgroundService()
+    // to avoid duplicate calls
 
     console.log('WakeAI app initialized');
   };
@@ -161,8 +160,8 @@ function AppContent() {
           return;
         }
 
-        // Preload check on resume
-        await checkAndPreloadQuestions();
+        // Note: Preload check is handled by backgroundService.js
+        // to avoid duplicate calls on resume
       }
     });
 
