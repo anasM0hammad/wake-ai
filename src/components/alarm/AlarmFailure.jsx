@@ -14,7 +14,7 @@ export default function AlarmFailure({
       case 'timeout':
         return {
           title: "Time's Up",
-          subtitle: "The alarm timed out after 15 minutes.",
+          subtitle: "The alarm timed out after 20 minutes.",
           tip: "Answer questions more quickly next time."
         };
       default:
