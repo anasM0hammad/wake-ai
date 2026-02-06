@@ -7,15 +7,18 @@ const STORAGE_KEY = 'wakeai_questions';
 
 /**
  * Get the required number of questions based on difficulty
- * EASY: 1 correct needed + 5 wrong allowed + 2 buffer = 8
- * MEDIUM: 3 correct needed + 5 wrong allowed + 2 buffer = 10
- * HARD: 5 correct needed + 5 wrong allowed + 2 buffer = 12
+ * Formula: (MAX_WRONG_ANSWERS - 1) + required_correct
+ *
+ * With MAX_WRONG_ANSWERS = 5:
+ * - EASY: 4 + 1 = 5 (worst case: 4 wrong then 1 correct, or 5 wrong = failure)
+ * - MEDIUM: 4 + 3 = 7 (worst case: 4 wrong then 3 correct)
+ * - HARD: 4 + 5 = 9 (worst case: 4 wrong then 5 correct)
  */
 export function getRequiredQuestionCount(difficulty) {
   const counts = {
-    'EASY': 8,
-    'MEDIUM': 10,
-    'HARD': 12
+    'EASY': 5,
+    'MEDIUM': 7,
+    'HARD': 9
   };
   return counts[difficulty] || counts['EASY'];
 }
