@@ -1,12 +1,20 @@
 import { get, set, remove } from '../storage/storageService';
+import { QUESTION_CACHE_SIZE } from '../../utils/constants';
 
 const CACHE_KEY = 'questionCache';
 
 export function cacheQuestions(questions) {
   const existing = getCachedQuestions();
   const combined = [...existing, ...questions];
-  set(CACHE_KEY, combined);
-  return combined;
+
+  // Enforce cache size limit - keep only the most recent questions
+  // This prevents localStorage from filling up with old cached questions
+  const limited = combined.length > QUESTION_CACHE_SIZE
+    ? combined.slice(-QUESTION_CACHE_SIZE)
+    : combined;
+
+  set(CACHE_KEY, limited);
+  return limited;
 }
 
 export function getCachedQuestions() {
