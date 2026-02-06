@@ -5,11 +5,8 @@ const TONE_PATH = '/assets/tones';
 
 const TONE_FILES = {
   gentle: `${TONE_PATH}/gentle.mp3`,
-  moderate: `${TONE_PATH}/moderate.mp3`,
-  aggressive: `${TONE_PATH}/aggressive.mp3`,
-  // Aliases from TONES constant
-  classic: `${TONE_PATH}/moderate.mp3`,
-  intense: `${TONE_PATH}/aggressive.mp3`
+  classic: `${TONE_PATH}/classic.mp3`,
+  intense: `${TONE_PATH}/intense.mp3`
 };
 
 const DEFAULT_VIBRATION_PATTERN = [500, 200, 500, 200, 500];
