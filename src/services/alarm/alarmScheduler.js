@@ -1,5 +1,6 @@
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { getNextAlarmDate } from '../../utils/timeUtils';
+import { getSettings } from '../storage/settingsStorage';
 
 const ALARM_CHANNEL_ID = 'wakeai-alarm-channel';
 const ALARM_CHANNEL_NAME = 'WakeAI Alarms';
@@ -59,6 +60,15 @@ export async function setupNotificationListeners() {
   }
 }
 
+export async function removeNotificationListeners() {
+  try {
+    await LocalNotifications.removeAllListeners();
+    notificationListenerRegistered = false;
+  } catch (error) {
+    console.error('Failed to remove notification listeners:', error);
+  }
+}
+
 export async function scheduleAlarm(alarm) {
   if (!alarm || !alarm.id || !alarm.time) {
     console.error('Invalid alarm data');
@@ -72,6 +82,11 @@ export async function scheduleAlarm(alarm) {
     const alarmDate = getNextAlarmDate(alarm.time, alarm.lastFiredDate || null);
     const notificationId = hashStringToInt(alarm.id);
 
+    // Get user's selected tone from settings (default to 'gentle')
+    const settings = getSettings();
+    const toneName = settings.alarmTone || 'gentle';
+    const soundFile = `${toneName}.mp3`;
+
     await LocalNotifications.schedule({
       notifications: [
         {
@@ -83,7 +98,7 @@ export async function scheduleAlarm(alarm) {
             allowWhileIdle: true
           },
           channelId: ALARM_CHANNEL_ID,
-          sound: 'gentle.mp3',
+          sound: soundFile,
           actionTypeId: 'ALARM_ACTION',
           extra: {
             alarmId: alarm.id,
@@ -151,6 +166,7 @@ function hashStringToInt(str) {
 export default {
   setupNotificationChannel,
   setupNotificationListeners,
+  removeNotificationListeners,
   setOnAlarmTrigger,
   scheduleAlarm,
   cancelAlarm,
