@@ -85,10 +85,10 @@ export default function Settings() {
   const handleDifficultySelect = (difficultyKey) => {
     const mode = DIFFICULTY_MODES[difficultyKey];
     if (mode?.premium && !isPremium) {
-      triggerUpsell(difficultyKey === 'medium' ? 'medium_difficulty' : 'hard_difficulty');
+      triggerUpsell(difficultyKey === 'MEDIUM' ? 'medium_difficulty' : 'hard_difficulty');
       return;
     }
-    updateSetting('difficulty', difficultyKey.toUpperCase());
+    updateSetting('difficulty', difficultyKey);
   };
 
   const handleKillCodeDigit = (index, value, isConfirm = false) => {
@@ -201,7 +201,7 @@ export default function Settings() {
           <div className="space-y-2">
             {Object.entries(DIFFICULTY_MODES).map(([key, mode]) => {
               const isLocked = mode.premium && !isPremium;
-              const isSelected = settings.difficulty?.toLowerCase() === key;
+              const isSelected = settings.difficulty === key;
 
               return (
                 <button

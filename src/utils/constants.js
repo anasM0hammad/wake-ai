@@ -36,10 +36,11 @@ export const QUESTION_PRELOAD_MINUTES = 30;
 export const AD_INTERSTITIAL_DELAY_MS = 1000;
 
 // Settings page constants with labels and descriptions
+// Keys match DIFFICULTY constant (uppercase) for consistency
 export const DIFFICULTY_MODES = {
-  easy: { label: 'Easy', questions: 1, timePerQuestion: 60, premium: false },
-  medium: { label: 'Medium', questions: 3, timePerQuestion: 45, premium: true },
-  hard: { label: 'Hard', questions: 5, timePerQuestion: 30, premium: true }
+  EASY: { label: 'Easy', questions: 1, timePerQuestion: 60, premium: false },
+  MEDIUM: { label: 'Medium', questions: 3, timePerQuestion: 45, premium: true },
+  HARD: { label: 'Hard', questions: 5, timePerQuestion: 30, premium: true }
 };
 
 export const QUESTION_CATEGORIES = {

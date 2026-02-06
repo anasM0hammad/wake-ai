@@ -18,6 +18,7 @@ import {
   setOnAlarmTrigger
 } from '../services/alarm/alarmScheduler';
 import {
+  playAlarm,
   playAlarmWithVibration,
   stopAlarmWithVibration
 } from '../services/alarm/audioPlayer';
@@ -89,9 +90,13 @@ export function useAlarm() {
     setActiveAlarmState(alarmToUse);
     setSession(newSession);
 
-    // Start audio and vibration
+    // Start audio (and vibration if enabled)
     try {
-      await playAlarmWithVibration(settings.alarmTone);
+      if (settings.vibrationEnabled) {
+        await playAlarmWithVibration(settings.alarmTone);
+      } else {
+        await playAlarm(settings.alarmTone);
+      }
     } catch (error) {
       console.error('Failed to play alarm:', error);
     }

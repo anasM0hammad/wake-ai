@@ -74,8 +74,8 @@ export default function Home() {
   // Get difficulty info
   const getDifficultyInfo = () => {
     if (!alarm?.difficulty) return { name: 'Easy', questions: 1 };
-    const diffKey = alarm.difficulty.toLowerCase();
-    const diff = DIFFICULTY_MODES[diffKey];
+    // Keys are uppercase to match DIFFICULTY constant
+    const diff = DIFFICULTY_MODES[alarm.difficulty];
     return diff ? { name: diff.label, questions: diff.questions } : { name: 'Easy', questions: 1 };
   };
 

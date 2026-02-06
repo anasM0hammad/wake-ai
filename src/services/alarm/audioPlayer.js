@@ -15,6 +15,7 @@ const ALARM_VIBRATION_PATTERN = [1000, 500, 1000, 500, 1000, 500];
 let currentSound = null;
 let vibrationInterval = null;
 let loadedTones = {};
+let loadedFeedbackSounds = {}; // Cache for feedback sounds to prevent memory leaks
 let webAudioOscillator = null;
 let webAudioContext = null;
 let webAudioGain = null;
@@ -305,12 +306,15 @@ export async function playFeedbackSound(type = 'success') {
 
   const soundFile = sounds[type] || sounds.tap;
 
-  const feedback = new Howl({
-    src: [soundFile],
-    volume: 0.5
-  });
+  // Reuse cached Howl instance to prevent memory leaks
+  if (!loadedFeedbackSounds[type]) {
+    loadedFeedbackSounds[type] = new Howl({
+      src: [soundFile],
+      volume: 0.5
+    });
+  }
 
-  feedback.play();
+  loadedFeedbackSounds[type].play();
 }
 
 export async function playHapticFeedback(style = 'medium') {

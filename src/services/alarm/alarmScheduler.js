@@ -158,9 +158,11 @@ function hashStringToInt(str) {
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
+    hash = hash | 0; // Convert to 32-bit signed integer
   }
-  return Math.abs(hash);
+  // Ensure positive non-zero value for notification ID
+  const result = Math.abs(hash);
+  return result === 0 ? 1 : result;
 }
 
 export default {

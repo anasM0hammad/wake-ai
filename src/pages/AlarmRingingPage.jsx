@@ -204,7 +204,8 @@ export default function AlarmRingingPage() {
 
     setSessionStats(stats);
     setFailureReason(reason);
-    await dismiss('fail');
+    // Pass actual reason to dismiss for proper stats tracking
+    await dismiss(reason === 'timeout' ? 'timeout' : 'fail');
     setState(STATES.FAILURE);
   }, [startTime, dismiss]);
 
