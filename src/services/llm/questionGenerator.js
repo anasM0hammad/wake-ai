@@ -70,6 +70,22 @@ function validateQuestion(question) {
   return true;
 }
 
+/**
+ * Find the matching closing bracket for an opening bracket at startIndex
+ * Returns the index of the closing bracket, or -1 if not found
+ */
+function findMatchingBracket(str, startIndex, openChar, closeChar) {
+  let depth = 0;
+  for (let i = startIndex; i < str.length; i++) {
+    if (str[i] === openChar) depth++;
+    else if (str[i] === closeChar) {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
 function parseJSONResponse(response) {
   // Try to extract JSON from the response
   let jsonStr = response.trim();
@@ -77,14 +93,22 @@ function parseJSONResponse(response) {
   // Remove markdown code blocks if present
   jsonStr = jsonStr.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '');
 
-  // Try to find JSON array or object
-  const arrayMatch = jsonStr.match(/\[[\s\S]*\]/);
-  const objectMatch = jsonStr.match(/\{[\s\S]*\}/);
+  // Find first [ or { and extract balanced JSON structure
+  const firstArray = jsonStr.indexOf('[');
+  const firstObject = jsonStr.indexOf('{');
 
-  if (arrayMatch) {
-    jsonStr = arrayMatch[0];
-  } else if (objectMatch) {
-    jsonStr = objectMatch[0];
+  if (firstArray !== -1 && (firstObject === -1 || firstArray < firstObject)) {
+    // Array comes first - find matching ]
+    const endIndex = findMatchingBracket(jsonStr, firstArray, '[', ']');
+    if (endIndex !== -1) {
+      jsonStr = jsonStr.substring(firstArray, endIndex + 1);
+    }
+  } else if (firstObject !== -1) {
+    // Object comes first - find matching }
+    const endIndex = findMatchingBracket(jsonStr, firstObject, '{', '}');
+    if (endIndex !== -1) {
+      jsonStr = jsonStr.substring(firstObject, endIndex + 1);
+    }
   }
 
   return JSON.parse(jsonStr);
