@@ -1,5 +1,6 @@
 import * as webllm from '@mlc-ai/web-llm';
 import { MODEL_CONFIG } from '../../utils/constants';
+import { getDeviceRAM } from '../../utils/deviceInfo';
 
 export const MODEL_OPTIONS = {
   small: MODEL_CONFIG.SMALL.id,
@@ -64,23 +65,21 @@ class WebLLMService {
 
   async getRecommendedModel() {
     try {
-      // Check device RAM
-      let ramMB = 0;
+      // Use platform-appropriate RAM detection from deviceInfo
+      const ramMB = await getDeviceRAM();
+      console.log(`[WebLLM] Device RAM: ${ramMB}MB, threshold: ${MODEL_CONFIG.LARGE.ramThreshold}MB`);
 
-      if (typeof navigator !== 'undefined' && 'deviceMemory' in navigator) {
-        // deviceMemory returns GB, convert to MB
-        ramMB = navigator.deviceMemory * 1024;
-      }
-
-      // If we can detect RAM and it's >= 6GB, use large model
+      // If RAM >= threshold (6GB), use large model
       if (ramMB >= MODEL_CONFIG.LARGE.ramThreshold) {
+        console.log('[WebLLM] Using large model (1.5B)');
         return MODEL_OPTIONS.large;
       }
 
-      // Default to small model for safety
+      // Default to small model for lower RAM devices
+      console.log('[WebLLM] Using small model (0.5B)');
       return MODEL_OPTIONS.small;
     } catch (error) {
-      console.error('Error detecting device RAM:', error);
+      console.error('[WebLLM] Error detecting device RAM:', error);
       // Default to small model if any uncertainty
       return MODEL_OPTIONS.small;
     }
