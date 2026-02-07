@@ -153,24 +153,17 @@ class WebLLMService {
     const {
       maxTokens = 512,
       temperature = 0.7,
-      topP = 0.9
+      topP = 0.9,
+      systemPrompt = null
     } = options;
 
-    // System prompt to ensure proper JSON output
-    const systemPrompt = `You are a quiz question generator for a wake-up alarm app. Your ONLY task is to generate quiz questions in valid JSON format.
-
-CRITICAL RULES:
-1. Output ONLY valid JSON - no explanations, no commentary, no markdown
-2. Each question must have exactly 4 options
-3. correctIndex must be 0, 1, 2, or 3 (0-based index)
-4. Keep questions under 80 characters
-5. All options must be plausible but only one correct
-6. Never include text before or after the JSON`;
+    // Default system prompt for question generation
+    const defaultSystemPrompt = `Generate simple quiz questions in JSON. Output ONLY valid JSON with: question, options (4 items), correctIndex (0-3). Ensure the correct answer is in options at correctIndex.`;
 
     try {
       const response = await this.engine.chat.completions.create({
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: systemPrompt || defaultSystemPrompt },
           { role: 'user', content: prompt }
         ],
         max_tokens: maxTokens,
