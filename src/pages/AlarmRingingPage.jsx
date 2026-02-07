@@ -92,6 +92,45 @@ export default function AlarmRingingPage() {
     return () => clearInterval(interval);
   }, []);
 
+    // Handle success
+  const handleSuccess = useCallback(async () => {
+    clearTimeout(timeoutRef.current);
+
+    // Use refs to get current values (avoids stale closure issues)
+    const stats = {
+      questionsAnswered: correctCountRef.current + wrongCountRef.current + 1,
+      questionsCorrect: correctCountRef.current + 1,
+      duration: Date.now() - startTime
+    };
+
+    setSessionStats(stats);
+    await dismiss('win');
+    setState(STATES.SUCCESS);
+  }, [startTime, dismiss]);
+
+  // Handle failure
+  const handleFailure = useCallback(async (reason) => {
+    clearTimeout(timeoutRef.current);
+
+    // Use refs to get current values (avoids stale closure issues with timeout)
+    const stats = {
+      questionsAnswered: correctCountRef.current + wrongCountRef.current,
+      questionsCorrect: correctCountRef.current,
+      duration: Date.now() - startTime
+    };
+
+    setSessionStats(stats);
+    setFailureReason(reason);
+    // Pass actual reason to dismiss for proper stats tracking
+    await dismiss(reason === 'timeout' ? 'timeout' : 'fail');
+    setState(STATES.FAILURE);
+  }, [startTime, dismiss]);
+
+   // Handle timeout
+  const handleTimeout = useCallback(() => {
+    handleFailure('timeout');
+  }, [handleFailure]); 
+
   // Set up timeout (20 minutes)
   useEffect(() => {
     timeoutRef.current = setTimeout(() => {
@@ -174,45 +213,6 @@ export default function AlarmRingingPage() {
       }
     }
   }, [correctCount, wrongCount, requiredCorrect, answerQuestion, handleSuccess, handleFailure]);
-
-  // Handle success
-  const handleSuccess = useCallback(async () => {
-    clearTimeout(timeoutRef.current);
-
-    // Use refs to get current values (avoids stale closure issues)
-    const stats = {
-      questionsAnswered: correctCountRef.current + wrongCountRef.current + 1,
-      questionsCorrect: correctCountRef.current + 1,
-      duration: Date.now() - startTime
-    };
-
-    setSessionStats(stats);
-    await dismiss('win');
-    setState(STATES.SUCCESS);
-  }, [startTime, dismiss]);
-
-  // Handle failure
-  const handleFailure = useCallback(async (reason) => {
-    clearTimeout(timeoutRef.current);
-
-    // Use refs to get current values (avoids stale closure issues with timeout)
-    const stats = {
-      questionsAnswered: correctCountRef.current + wrongCountRef.current,
-      questionsCorrect: correctCountRef.current,
-      duration: Date.now() - startTime
-    };
-
-    setSessionStats(stats);
-    setFailureReason(reason);
-    // Pass actual reason to dismiss for proper stats tracking
-    await dismiss(reason === 'timeout' ? 'timeout' : 'fail');
-    setState(STATES.FAILURE);
-  }, [startTime, dismiss]);
-
-  // Handle timeout
-  const handleTimeout = useCallback(() => {
-    handleFailure('timeout');
-  }, [handleFailure]);
 
   // Handle kill switch
   const handleKillSwitch = useCallback(async () => {
