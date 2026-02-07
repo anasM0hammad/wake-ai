@@ -15,9 +15,7 @@ import {
   hasValidQuestionSet,
   getRequiredQuestionCount
 } from '../storage/questionStorage';
-import { generateQuestionSet } from '../llm/questionService';
-import { unloadModel } from '../llm/webllm';
-import { getRandomFallbackQuestions } from '../llm/fallbackQuestions';
+import { getQuestionsFromPool, getPoolCount } from '../llm/questionPool';
 import { getTodayDateString } from '../../utils/timeUtils';
 
 // Session state
@@ -25,10 +23,10 @@ let currentSession = null;
 let activeAlarm = null;
 
 /**
- * Generate and save questions for an alarm (async, non-blocking)
- * This runs in the background and doesn't block the UI
+ * Get questions for an alarm from the pre-generated pool
+ * Uses questions generated on app start, supplements with fallback if needed
  */
-async function generateQuestionsForAlarm(alarm) {
+async function prepareQuestionsForAlarm(alarm) {
   const settings = getSettings();
   const difficulty = alarm.difficulty || settings.difficulty || 'EASY';
   const categories = settings.selectedCategories || ['math'];
@@ -36,48 +34,38 @@ async function generateQuestionsForAlarm(alarm) {
 
   // Check if we already have valid questions for this exact config
   if (hasValidQuestionSet(alarm.id, difficulty, categories)) {
-    console.log('[AlarmManager] Existing question set is still valid, skipping generation');
+    console.log('[AlarmManager] Existing question set is still valid, skipping');
     return;
   }
 
   // Delete old questions
   deleteQuestionSet();
 
-  console.log('[AlarmManager] Generating', count, 'questions for', difficulty, categories);
+  console.log('[AlarmManager] Getting', count, 'questions for', difficulty, 'from pool');
+  const poolCount = getPoolCount();
+  console.log('[AlarmManager] Pool has', poolCount, 'questions');
 
-  try {
-    const questions = await generateQuestionSet(difficulty, categories, count);
+  // Get questions from pool (auto-supplements with fallback if needed)
+  const questions = getQuestionsFromPool(count, categories);
 
-    saveQuestionSet({
-      alarmId: alarm.id,
-      difficulty: difficulty,
-      categories: categories,
-      questions: questions,
-      generatedAt: Date.now(),
-      source: questions._source || 'llm'
-    });
-
-    console.log('[AlarmManager] Questions saved successfully:', questions.length);
-  } catch (e) {
-    console.error('[AlarmManager] Question generation failed, saving fallback:', e);
-
-    // Use fallback questions as safety net
-    const fallbackQs = getRandomFallbackQuestions(categories, count);
-    saveQuestionSet({
-      alarmId: alarm.id,
-      difficulty: difficulty,
-      categories: categories,
-      questions: fallbackQs,
-      generatedAt: Date.now(),
-      source: 'fallback'
-    });
-  } finally {
-    // Unload model after question generation to free memory
-    console.log('[AlarmManager] Unloading LLM model to free memory');
-    unloadModel().catch(e => {
-      console.warn('[AlarmManager] Failed to unload model:', e);
-    });
+  // Determine source based on pool count
+  let source = 'pool';
+  if (poolCount === 0) {
+    source = 'fallback';
+  } else if (poolCount < count) {
+    source = 'mixed';
   }
+
+  saveQuestionSet({
+    alarmId: alarm.id,
+    difficulty: difficulty,
+    categories: categories,
+    questions: questions,
+    generatedAt: Date.now(),
+    source: source
+  });
+
+  console.log('[AlarmManager] Questions saved:', questions.length, 'source:', source);
 }
 
 // Alarm CRUD operations
@@ -97,9 +85,9 @@ export async function createAlarm(time, difficulty = null) {
   saveAlarm(alarm);
   await scheduleAlarm(alarm);
 
-  // Generate questions in the background (fire and forget - don't await)
-  generateQuestionsForAlarm(alarm).catch(e => {
-    console.error('[AlarmManager] Background question generation failed:', e);
+  // Prepare questions from pool in the background (fire and forget - don't await)
+  prepareQuestionsForAlarm(alarm).catch(e => {
+    console.error('[AlarmManager] Background question preparation failed:', e);
   });
 
   return alarm;
@@ -153,9 +141,9 @@ export async function updateAlarm(id, updates) {
       });
       console.log('[AlarmManager] Reusing existing questions, updated difficulty metadata');
     } else {
-      // Need more questions or full regeneration
-      generateQuestionsForAlarm(updatedAlarm).catch(e => {
-        console.error('[AlarmManager] Background question regeneration failed:', e);
+      // Need more questions - get from pool
+      prepareQuestionsForAlarm(updatedAlarm).catch(e => {
+        console.error('[AlarmManager] Background question preparation failed:', e);
       });
     }
   }
@@ -295,8 +283,8 @@ export function getSessionDuration() {
   return Date.now() - currentSession.startedAt;
 }
 
-// Export the question generation function for use after alarm session ends
-export { generateQuestionsForAlarm };
+// Export the question preparation function for use after alarm session ends
+export { prepareQuestionsForAlarm };
 
 /**
  * Reschedule the alarm for the next day after dismiss.
@@ -333,6 +321,6 @@ export default {
   getSessionDuration,
 
   // Questions
-  generateQuestionsForAlarm,
+  prepareQuestionsForAlarm,
   rescheduleAlarmForNextDay
 };

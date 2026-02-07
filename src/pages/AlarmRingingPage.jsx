@@ -11,7 +11,7 @@ import { getRandomFallbackQuestions } from '../services/llm/fallbackQuestions';
 import { DIFFICULTY, MAX_WRONG_ANSWERS, MAX_RING_DURATION_MS } from '../utils/constants';
 import { resetAlarmFiring } from '../services/alarm/alarmTimer';
 import { getQuestionSet, deleteQuestionSet, getRequiredQuestionCount } from '../services/storage/questionStorage';
-import { generateQuestionsForAlarm } from '../services/alarm/alarmManager';
+import { prepareQuestionsForAlarm } from '../services/alarm/alarmManager';
 import { getAlarm } from '../services/storage/alarmStorage';
 
 const STATES = {
@@ -228,7 +228,7 @@ export default function AlarmRingingPage() {
     const currentAlarm = getAlarm();
     if (currentAlarm && currentAlarm.enabled) {
       console.log('[AlarmRinging] Regenerating questions after kill switch...');
-      generateQuestionsForAlarm(currentAlarm).catch(e => {
+      prepareQuestionsForAlarm(currentAlarm).catch(e => {
         console.log('[AlarmRinging] Background question regeneration failed:', e);
       });
     }
@@ -248,7 +248,7 @@ export default function AlarmRingingPage() {
     const currentAlarm = getAlarm();
     if (currentAlarm && currentAlarm.enabled) {
       console.log('[AlarmRinging] Regenerating questions for next alarm...');
-      generateQuestionsForAlarm(currentAlarm).catch(e => {
+      prepareQuestionsForAlarm(currentAlarm).catch(e => {
         console.log('[AlarmRinging] Background question regeneration failed:', e);
       });
     }
