@@ -85,15 +85,32 @@ function findAnswerInOptions(llmAnswer, options) {
 }
 
 /**
+ * Build category-specific prompt with explicit constraints
+ */
+function buildPromptForCategory(category) {
+  const prompts = {
+    math: `Generate 1 math question. Use numbers 1-20 only. Operations: + - ×. Output JSON: {"question":"...","options":["...","...","...","..."],"correctIndex":0}`,
+
+    patterns: `Generate 1 number sequence question. Use numbers under 30. Simple pattern with difference under 5. Ask "what comes next". Output JSON: {"question":"...","options":["...","...","...","..."],"correctIndex":0}`,
+
+    general: `Generate 1 basic world fact question. Topics: countries, animals, planets, colors. Short question. Output JSON: {"question":"...","options":["...","...","...","..."],"correctIndex":0}`,
+
+    logic: `Generate 1 simple word problem. Use numbers under 10. Basic arithmetic in words. Output JSON: {"question":"...","options":["...","...","...","..."],"correctIndex":0}`
+  };
+
+  return prompts[category] || prompts.math;
+}
+
+/**
  * Generate a single question
  */
 async function generateSingleQuestion(category) {
-  const prompt = `Generate 1 simple ${category} quiz question. Output JSON: {"question":"...","options":["A","B","C","D"],"correctIndex":0}`;
+  const prompt = buildPromptForCategory(category);
 
   try {
     const response = await generateCompletion(prompt, {
-      maxTokens: 200,
-      temperature: 0.8
+      maxTokens: 150,
+      temperature: 0.7
     });
 
     const parsed = parseSingleQuestion(response);

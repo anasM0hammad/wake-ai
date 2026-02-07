@@ -158,7 +158,7 @@ class WebLLMService {
     } = options;
 
     // Default system prompt for question generation
-    const defaultSystemPrompt = `Generate simple quiz questions in JSON. Output ONLY valid JSON with: question, options (4 items), correctIndex (0-3). Ensure the correct answer is in options at correctIndex.`;
+    const defaultSystemPrompt = `You generate grade 2-3 level quiz questions. Use small numbers only. Output valid JSON only.`;
 
     try {
       const response = await this.engine.chat.completions.create({
