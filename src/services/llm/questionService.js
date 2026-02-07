@@ -1,65 +1,50 @@
 /**
  * Question Generation Service
- * Handles LLM question generation with robust error handling and fallback
+ * Single question generation with LLM verification
  */
 
 import { generateCompletion, isModelReady } from './webllm';
 import { getRandomFallbackQuestions } from './fallbackQuestions';
 
-const MAX_RETRIES = 2;
+const MAX_VERIFICATION_ATTEMPTS = 2;
 
 /**
- * Safely parse LLM response text to extract questions JSON
- * Handles common issues like markdown fences, trailing commas, etc.
+ * Parse a single question JSON from LLM response
  */
-function safeParseQuestions(responseText) {
+function parseSingleQuestion(responseText) {
   if (!responseText || typeof responseText !== 'string') {
     return null;
   }
 
   let text = responseText.trim();
 
-  // Remove markdown code fences if present
+  // Remove markdown code fences
   text = text.replace(/```json\s*/gi, '').replace(/```\s*/gi, '');
 
-  // Remove any text before the first [ and after the last ]
-  const firstBracket = text.indexOf('[');
-  const lastBracket = text.lastIndexOf(']');
-  if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-    text = text.substring(firstBracket, lastBracket + 1);
-  } else {
-    // No valid array brackets found
+  // Find JSON object
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
     return null;
   }
 
-  // Fix common JSON issues
-  // Remove trailing commas before ] or }
-  text = text.replace(/,\s*]/g, ']').replace(/,\s*}/g, '}');
+  text = text.substring(firstBrace, lastBrace + 1);
 
-  // Fix unescaped newlines in strings (replace with space)
-  text = text.replace(/([^\\])"([^"]*)\n([^"]*)"/g, '$1"$2 $3"');
-
-  // Replace problematic escape sequences
-  text = text.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+  // Fix trailing commas
+  text = text.replace(/,\s*}/g, '}');
 
   try {
-    const parsed = JSON.parse(text);
-    if (!Array.isArray(parsed)) {
-      console.warn('[QuestionService] Parsed result is not an array');
-      return null;
-    }
-    return parsed;
+    return JSON.parse(text);
   } catch (e) {
     console.error('[QuestionService] JSON parse failed:', e.message);
-    console.debug('[QuestionService] Failed text:', text.substring(0, 500));
     return null;
   }
 }
 
 /**
- * Validate a single question object
+ * Validate question structure
  */
-function validateQuestion(q) {
+function isValidQuestion(q) {
   if (!q || typeof q !== 'object') return false;
   if (typeof q.question !== 'string' || q.question.length === 0) return false;
   if (!Array.isArray(q.options) || q.options.length !== 4) return false;
@@ -69,158 +54,203 @@ function validateQuestion(q) {
 }
 
 /**
- * Build the prompt for LLM question generation
+ * Normalize answer for comparison (lowercase, trim, remove punctuation)
  */
-function buildPrompt(categories, count) {
-  const categoryList = categories.join(', ');
-
-  return `Generate exactly ${count} multiple choice questions.
-Categories: ${categoryList}
-Each question must have exactly 4 options with one correct answer.
-
-IMPORTANT: Respond with ONLY a JSON array. No other text before or after.
-
-Format:
-[
-  {
-    "category": "math",
-    "question": "What is 12 + 8?",
-    "options": ["18", "20", "22", "24"],
-    "correctIndex": 1
-  }
-]
-
-Rules:
-- correctIndex is 0-based (0 = first option, 3 = last option)
-- Questions should be clear and unambiguous
-- All 4 options must be plausible
-- Do not use special characters or escape sequences
-- Keep questions and options short (under 80 characters each)
-- Mix the categories evenly if multiple are provided`;
+function normalizeAnswer(answer) {
+  if (!answer) return '';
+  return String(answer)
+    .toLowerCase()
+    .trim()
+    .replace(/[.,!?]/g, '')
+    .replace(/\s+/g, ' ');
 }
 
 /**
- * Attempt to generate questions via LLM
+ * Find if LLM's answer matches any option
+ * Returns the matching index or -1
  */
-async function tryLLMGeneration(categories, count) {
-  if (!isModelReady()) {
-    console.log('[QuestionService] LLM not ready, skipping LLM generation');
-    return null;
-  }
+function findAnswerInOptions(llmAnswer, options) {
+  const normalizedLLMAnswer = normalizeAnswer(llmAnswer);
 
-  const prompt = buildPrompt(categories, count);
+  for (let i = 0; i < options.length; i++) {
+    const normalizedOption = normalizeAnswer(options[i]);
+    // Check if LLM answer matches or contains the option (or vice versa)
+    if (normalizedLLMAnswer === normalizedOption ||
+        normalizedLLMAnswer.includes(normalizedOption) ||
+        normalizedOption.includes(normalizedLLMAnswer)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Generate a single question
+ */
+async function generateSingleQuestion(category) {
+  const prompt = `Generate 1 simple ${category} quiz question. Output JSON: {"question":"...","options":["A","B","C","D"],"correctIndex":0}`;
 
   try {
-    console.log('[QuestionService] Requesting', count, 'questions from LLM...');
-
     const response = await generateCompletion(prompt, {
-      maxTokens: 2048,
-      temperature: 0.7
+      maxTokens: 200,
+      temperature: 0.8
+    });
+
+    const parsed = parseSingleQuestion(response);
+    if (!isValidQuestion(parsed)) {
+      return null;
+    }
+
+    return {
+      category,
+      question: parsed.question,
+      options: parsed.options,
+      correctIndex: parsed.correctIndex
+    };
+  } catch (error) {
+    console.error('[QuestionService] Generation error:', error);
+    return null;
+  }
+}
+
+/**
+ * Verify question by asking LLM to solve it
+ * Returns: { valid: boolean, fixedIndex?: number }
+ */
+async function verifyQuestion(question) {
+  const verifyPrompt = `${question.question} Answer with just the answer.`;
+
+  try {
+    const response = await generateCompletion(verifyPrompt, {
+      maxTokens: 50,
+      temperature: 0.1, // Low temperature for consistent answers
+      systemPrompt: 'Answer questions directly and concisely. Output only the answer.'
     });
 
     if (!response) {
-      console.warn('[QuestionService] LLM returned empty response');
-      return null;
+      return { valid: false };
     }
 
-    console.log('[QuestionService] LLM response length:', response.length);
+    const llmAnswer = response.trim();
+    const markedAnswer = question.options[question.correctIndex];
 
-    const parsed = safeParseQuestions(response);
-    if (!parsed) {
-      console.warn('[QuestionService] Failed to parse LLM response');
-      return null;
+    // Check if LLM's answer matches the marked correct answer
+    const normalizedLLM = normalizeAnswer(llmAnswer);
+    const normalizedMarked = normalizeAnswer(markedAnswer);
+
+    if (normalizedLLM === normalizedMarked ||
+        normalizedLLM.includes(normalizedMarked) ||
+        normalizedMarked.includes(normalizedLLM)) {
+      console.log('[QuestionService] Verification passed:', question.question);
+      return { valid: true };
     }
 
-    // Filter to only valid questions
-    const validQuestions = parsed.filter(validateQuestion);
-    console.log('[QuestionService] Valid questions from LLM:', validQuestions.length, 'of', parsed.length);
+    // Answer doesn't match - try to find correct option
+    const correctIndex = findAnswerInOptions(llmAnswer, question.options);
 
-    if (validQuestions.length === 0) {
-      return null;
+    if (correctIndex !== -1 && correctIndex !== question.correctIndex) {
+      console.log('[QuestionService] Fixing correctIndex:', question.correctIndex, '->', correctIndex);
+      return { valid: true, fixedIndex: correctIndex };
     }
 
-    // Add IDs to questions
-    return validQuestions.map((q, i) => ({
-      id: `llm_${Date.now()}_${i}`,
-      category: q.category || categories[0] || 'general',
-      question: q.question,
-      options: q.options,
-      correctIndex: q.correctIndex
-    }));
+    console.log('[QuestionService] Verification failed. LLM said:', llmAnswer, 'Marked:', markedAnswer);
+    return { valid: false };
   } catch (error) {
-    console.error('[QuestionService] LLM generation error:', error);
-    return null;
+    console.error('[QuestionService] Verification error:', error);
+    return { valid: false };
   }
 }
 
 /**
- * Generate a question set with LLM fallback to hardcoded questions
+ * Generate and verify a single question with retries
+ */
+async function generateVerifiedQuestion(category, index) {
+  for (let attempt = 1; attempt <= MAX_VERIFICATION_ATTEMPTS; attempt++) {
+    console.log(`[QuestionService] Generating question ${index + 1}, attempt ${attempt}`);
+
+    // Generate question
+    const question = await generateSingleQuestion(category);
+    if (!question) {
+      console.log('[QuestionService] Generation failed, retrying...');
+      continue;
+    }
+
+    // Verify question
+    const verification = await verifyQuestion(question);
+
+    if (verification.valid) {
+      // Apply fix if needed
+      if (verification.fixedIndex !== undefined) {
+        question.correctIndex = verification.fixedIndex;
+      }
+
+      return {
+        id: `llm_${Date.now()}_${index}`,
+        ...question,
+        verified: true
+      };
+    }
+  }
+
+  // All attempts failed - return null to use fallback
+  console.log('[QuestionService] All verification attempts failed, will use fallback');
+  return null;
+}
+
+/**
+ * Generate a verified question set
  * @param {string} difficulty - EASY, MEDIUM, or HARD
  * @param {string[]} categories - Question categories
  * @param {number} count - Number of questions needed
- * @returns {Promise<Object[]>} Array of question objects
+ * @returns {Promise<Object[]>} Array of verified question objects
  */
 export async function generateQuestionSet(difficulty, categories, count) {
-  console.log('[QuestionService] Generating question set:', { difficulty, categories, count });
+  console.log('[QuestionService] Generating verified question set:', { difficulty, categories, count });
 
-  let questions = null;
-  let source = 'fallback';
+  if (!isModelReady()) {
+    console.log('[QuestionService] LLM not ready, using fallback questions');
+    const questions = getRandomFallbackQuestions(categories, count);
+    questions._source = 'fallback';
+    return questions;
+  }
 
-  // Try LLM generation with retries
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    console.log('[QuestionService] LLM attempt', attempt, 'of', MAX_RETRIES);
+  const questions = [];
+  const categoriesList = Array.isArray(categories) ? categories : [categories];
+  let llmSuccessCount = 0;
 
-    // On retry, ask for fewer questions to improve success rate
-    const requestCount = attempt === 1 ? count : Math.ceil(count / 2);
+  for (let i = 0; i < count; i++) {
+    const category = categoriesList[i % categoriesList.length];
 
-    questions = await tryLLMGeneration(categories, requestCount);
+    const question = await generateVerifiedQuestion(category, i);
 
-    if (questions && questions.length >= count) {
-      source = 'llm';
-      break;
-    }
-
-    if (questions && questions.length > 0 && questions.length < count) {
-      // Got some questions but not enough - supplement with fallback
-      console.log('[QuestionService] LLM returned', questions.length, 'questions, need', count - questions.length, 'more');
-      const needed = count - questions.length;
-      const fallbackSupplement = getRandomFallbackQuestions(categories, needed);
-      questions = [...questions, ...fallbackSupplement];
-      source = 'mixed';
-      break;
-    }
-
-    // Small delay before retry
-    if (attempt < MAX_RETRIES) {
-      await new Promise(resolve => setTimeout(resolve, 500));
+    if (question) {
+      questions.push(question);
+      llmSuccessCount++;
+    } else {
+      // Use fallback for this question
+      const fallback = getRandomFallbackQuestions([category], 1)[0];
+      if (fallback) {
+        fallback.id = `fallback_${Date.now()}_${i}`;
+        questions.push(fallback);
+      }
     }
   }
 
-  // If LLM completely failed, use fallback
-  if (!questions || questions.length === 0) {
-    console.log('[QuestionService] Using fallback questions');
-    questions = getRandomFallbackQuestions(categories, count);
-    source = 'fallback';
+  // Determine source
+  if (llmSuccessCount === count) {
+    questions._source = 'llm';
+  } else if (llmSuccessCount > 0) {
+    questions._source = 'mixed';
+  } else {
+    questions._source = 'fallback';
   }
 
-  // Ensure we have enough questions (supplement with fallback if needed)
-  if (questions.length < count) {
-    const additional = getRandomFallbackQuestions(categories, count - questions.length);
-    questions = [...questions, ...additional];
-  }
-
-  // Trim to exact count needed
-  questions = questions.slice(0, count);
-
-  // Attach source for metadata
-  questions._source = source;
-
-  console.log('[QuestionService] Final question set:', questions.length, 'questions, source:', source);
+  console.log('[QuestionService] Final set:', questions.length, 'questions,', llmSuccessCount, 'from LLM, source:', questions._source);
   return questions;
 }
 
 /**
- * Quick check if LLM is available for question generation
+ * Quick check if LLM is available
  */
 export function isLLMAvailable() {
   return isModelReady();
