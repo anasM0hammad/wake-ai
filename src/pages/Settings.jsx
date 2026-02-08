@@ -1,14 +1,13 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSettings } from '../hooks/useSettings';
-import { usePremium } from '../hooks/usePremium';
+import { useBannerAd } from '../hooks/useAds';
 import { Button, Toggle, Modal, Card } from '../components/common';
 import { DIFFICULTY_MODES, QUESTION_CATEGORIES, ALARM_TONES } from '../utils/constants';
 
 export default function Settings() {
   const navigate = useNavigate();
   const { settings, updateSettings } = useSettings();
-  const { isPremium, triggerUpsell } = usePremium();
   const [showResetModal, setShowResetModal] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
   const [showKillCodeModal, setShowKillCodeModal] = useState(false);
@@ -18,6 +17,9 @@ export default function Settings() {
   const [killCodeError, setKillCodeError] = useState('');
   const inputRefs = useRef([]);
   const confirmInputRefs = useRef([]);
+
+  // Show banner ad at bottom
+  useBannerAd();
 
   const updateSetting = (key, value) => {
     updateSettings({ [key]: value });
@@ -55,12 +57,6 @@ export default function Settings() {
   const handleCategoryToggle = (category) => {
     const currentCategories = settings.selectedCategories || ['math'];
 
-    if (!isPremium) {
-      // Free users can only have one category selected
-      updateSetting('selectedCategories', [category]);
-      return;
-    }
-
     let newCategories;
     if (currentCategories.includes(category)) {
       // Don't allow removing if it's the last category
@@ -74,20 +70,10 @@ export default function Settings() {
   };
 
   const handleToneSelect = (toneKey) => {
-    const tone = ALARM_TONES[toneKey];
-    if (tone?.premium && !isPremium) {
-      triggerUpsell('premium_tones');
-      return;
-    }
     updateSetting('alarmTone', toneKey);
   };
 
   const handleDifficultySelect = (difficultyKey) => {
-    const mode = DIFFICULTY_MODES[difficultyKey];
-    if (mode?.premium && !isPremium) {
-      triggerUpsell(difficultyKey === 'MEDIUM' ? 'medium_difficulty' : 'hard_difficulty');
-      return;
-    }
     updateSetting('difficulty', difficultyKey);
   };
 
@@ -200,7 +186,6 @@ export default function Settings() {
           </h2>
           <div className="space-y-2">
             {Object.entries(DIFFICULTY_MODES).map(([key, mode]) => {
-              const isLocked = mode.premium && !isPremium;
               const isSelected = settings.difficulty === key;
 
               return (
@@ -210,8 +195,6 @@ export default function Settings() {
                   className={`w-full p-3 rounded-xl text-left transition-colors flex items-center justify-between ${
                     isSelected
                       ? 'bg-[#10B981]/10 border-2 border-[#10B981]/30'
-                      : isLocked
-                      ? 'bg-[#0A0A0A] border-2 border-transparent opacity-60'
                       : 'bg-[#0A0A0A] border-2 border-transparent hover:bg-[#161616]'
                   }`}
                 >
@@ -220,14 +203,6 @@ export default function Settings() {
                       <span className={`font-medium ${isSelected ? 'text-[#34D399]' : 'text-[#F1F1F1]'}`}>
                         {mode.label}
                       </span>
-                      {isLocked && (
-                        <span className="px-2 py-0.5 text-xs font-medium bg-[#D4A053]/20 text-[#D4A053] rounded-full flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                          </svg>
-                          Premium
-                        </span>
-                      )}
                     </div>
                     <div className="text-sm text-[#636363]">
                       {mode.questions} questions
@@ -249,11 +224,6 @@ export default function Settings() {
           <h2 className="text-xs font-medium text-[#636363] uppercase tracking-wide mb-3">
             Question Categories
           </h2>
-          {!isPremium && (
-            <p className="text-xs text-[#D4A053] mb-3">
-              Free users can select one category. Upgrade for multiple categories.
-            </p>
-          )}
           <div className="space-y-3">
             {Object.entries(QUESTION_CATEGORIES).map(([key, category]) => (
               <div key={key} className="flex items-center justify-between">
@@ -281,7 +251,6 @@ export default function Settings() {
           </h2>
           <div className="space-y-2">
             {Object.entries(ALARM_TONES).map(([key, tone]) => {
-              const isLocked = tone.premium && !isPremium;
               const isSelected = settings.alarmTone === key;
 
               return (
@@ -291,8 +260,6 @@ export default function Settings() {
                   className={`w-full p-3 rounded-xl text-left flex items-center justify-between transition-colors ${
                     isSelected
                       ? 'bg-[#10B981]/10 border-2 border-[#10B981]/30'
-                      : isLocked
-                      ? 'bg-[#0A0A0A] border-2 border-transparent opacity-60'
                       : 'bg-[#0A0A0A] border-2 border-transparent hover:bg-[#161616]'
                   }`}
                 >
@@ -300,14 +267,6 @@ export default function Settings() {
                     <span className={`font-medium ${isSelected ? 'text-[#34D399]' : 'text-[#F1F1F1]'}`}>
                       {tone.label}
                     </span>
-                    {isLocked && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-[#D4A053]/20 text-[#D4A053] rounded-full flex items-center gap-1">
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                        </svg>
-                        Premium
-                      </span>
-                    )}
                   </div>
                   {isSelected && (
                     <svg className="w-5 h-5 text-[#10B981]" fill="currentColor" viewBox="0 0 20 20">
@@ -380,6 +339,9 @@ export default function Settings() {
           </Button>
         </Card>
       </div>
+
+      {/* Spacer for native banner ad overlay */}
+      <div className="h-16 flex-shrink-0" />
 
       {/* Reset Confirmation Modal */}
       <Modal

@@ -7,7 +7,6 @@ const DEFAULT_SETTINGS = {
   selectedCategories: ['math'],
   alarmTone: 'gentle',
   killCode: null,
-  isPremium: false,
   onboardingComplete: false,
   modelDownloaded: false
 };

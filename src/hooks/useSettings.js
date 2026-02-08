@@ -18,13 +18,11 @@ export function useSettings() {
   }, []);
 
   const isOnboardingComplete = settings.onboardingComplete;
-  const isPremium = settings.isPremium;
 
   return {
     settings,
     updateSettings,
     isOnboardingComplete,
-    isPremium
   };
 }
 

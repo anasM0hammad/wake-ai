@@ -12,6 +12,11 @@ const config: CapacitorConfig = {
       smallIcon: 'ic_stat_icon_config_sample',
       iconColor: '#488AFF',
       sound: 'gentle.mp3'
+    },
+    AdMob: {
+      // Uses test ads by default; set to false for production
+      testingDevices: [],
+      initializeForTesting: true
     }
   }
 };
