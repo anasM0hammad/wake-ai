@@ -32,21 +32,30 @@
  *     [ ] Failure screen shows on 5 wrong answers
  *     [ ] Failure screen shows on 20 min timeout
  *     [ ] Stats are recorded after alarm ends
- *     [ ] Ad placeholder shows for free users on success
+ *     [ ] Interstitial ad shows after alarm success
  *
  * [ ] Settings
- *     [ ] Difficulty modes can be changed (Easy free, Medium/Hard premium)
- *     [ ] Question categories toggle (free: 1 only, premium: multiple)
- *     [ ] Alarm tone selection (free: gentle only, others premium)
+ *     [ ] All difficulty modes freely selectable
+ *     [ ] Question categories toggle (multiple allowed)
+ *     [ ] All alarm tones freely selectable
  *     [ ] Kill code can be changed
  *     [ ] Vibration can be toggled
  *     [ ] Reset settings works
+ *     [ ] Banner ad displays at bottom
  *
- * [ ] Dashboard (Premium Only)
- *     [ ] Non-premium users see upgrade prompt (stats still recorded)
- *     [ ] Premium users see full stats
+ * [ ] Dashboard
+ *     [ ] Rewarded video gate shows before stats
+ *     [ ] After watching ad, full stats display
  *     [ ] Success rate displays correctly
  *     [ ] Streaks are tracked properly
+ *     [ ] Banner ad displays at bottom
+ *
+ * [ ] Ads
+ *     [ ] AdMob initializes on app start
+ *     [ ] Banner ads show on Home, Settings, Dashboard
+ *     [ ] Interstitial ad fires after alarm success
+ *     [ ] Rewarded video gates Dashboard stats
+ *     [ ] Ads degrade gracefully on web (no crashes)
  *
  * [ ] LLM / Questions
  *     [ ] Model auto-selects based on RAM (>=6GB: large, <6GB: small)
@@ -76,10 +85,10 @@ import { ErrorBoundary, AlarmErrorBoundary } from './components/common';
 import AlarmMonitor from './components/AlarmMonitor';
 import { isOnboardingComplete } from './services/storage/settingsStorage';
 import { getSettings } from './services/storage/settingsStorage';
-import { initializeModel } from './services/llm/webllm';
 import { initializeBackgroundService, cleanupBackgroundService } from './services/alarm/backgroundService';
 import { setupNotificationChannel, setOnAlarmTrigger, removeNotificationListeners } from './services/alarm/alarmScheduler';
 import { initializeQuestionPool } from './services/llm/questionPool';
+import { initializeAds } from './services/ad';
 
 // Inner component that has access to navigation
 function AppContent() {
@@ -102,6 +111,9 @@ function AppContent() {
 
   const initializeApp = async () => {
     console.log('Initializing WakeAI app...');
+
+    // Initialize AdMob SDK
+    await initializeAds();
 
     // Set up notification channel for alarms
     await setupNotificationChannel();

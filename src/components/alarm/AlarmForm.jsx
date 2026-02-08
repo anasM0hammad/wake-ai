@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import TimePicker from '../common/TimePicker';
 import { DIFFICULTY } from '../../utils/constants';
-import { usePremium } from '../../hooks/usePremium';
 
 export default function AlarmForm({
   alarm,
@@ -12,17 +11,6 @@ export default function AlarmForm({
   // Initialize directly from alarm prop - component remounts fresh each time it opens
   const [time, setTime] = useState(alarm?.time || '07:00');
   const [difficulty, setDifficulty] = useState(alarm?.difficulty || 'EASY');
-
-  const { isPremium, triggerUpsell } = usePremium();
-
-  const handleDifficultySelect = (level) => {
-    const difficultyInfo = DIFFICULTY[level];
-    if (difficultyInfo?.premium && !isPremium) {
-      triggerUpsell(level === 'MEDIUM' ? 'medium_difficulty' : 'hard_difficulty');
-      return;
-    }
-    setDifficulty(level);
-  };
 
   const handleSave = () => {
     onSave?.({
@@ -78,40 +66,27 @@ export default function AlarmForm({
             <h3 className="text-xs font-medium text-[#636363] uppercase tracking-wide mb-3">Difficulty</h3>
             <div className="space-y-2">
               {Object.entries(DIFFICULTY).map(([key, value]) => {
-                const isLocked = value.premium && !isPremium;
                 const isSelected = difficulty === key;
 
                 return (
                   <button
                     key={key}
-                    onClick={() => handleDifficultySelect(key)}
+                    onClick={() => setDifficulty(key)}
                     className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center justify-between ${
                       isSelected
                         ? 'border-[#10B981]/30 bg-[#10B981]/10'
-                        : isLocked
-                        ? 'border-[#1A1A1A] bg-[#0A0A0A] opacity-60'
                         : 'border-[#1A1A1A] bg-[#0A0A0A] hover:border-[#222222]'
                     }`}
                   >
                     <div>
                       <div className="flex items-center gap-2">
                         <span className={`font-semibold ${
-                          isSelected ? 'text-[#34D399]' : isLocked ? 'text-[#636363]' : 'text-[#F1F1F1]'
+                          isSelected ? 'text-[#34D399]' : 'text-[#F1F1F1]'
                         }`}>
                           {value.name}
                         </span>
-                        {isLocked && (
-                          <span className="px-2 py-0.5 text-xs font-medium bg-[#D4A053]/20 text-[#D4A053] rounded-full flex items-center gap-1">
-                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                            </svg>
-                            Premium
-                          </span>
-                        )}
                       </div>
-                      <p className={`text-sm mt-1 ${
-                        isLocked ? 'text-[#636363]' : 'text-[#636363]'
-                      }`}>
+                      <p className="text-sm mt-1 text-[#636363]">
                         Answer {value.questions} question{value.questions > 1 ? 's' : ''} to dismiss
                       </p>
                     </div>

@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAlarm } from '../hooks/useAlarm';
 import { useSettings } from '../hooks/useSettings';
-import { usePremium } from '../hooks/usePremium';
 import { useLLM } from '../hooks/useLLM';
+import { useBannerAd } from '../hooks/useAds';
 import AlarmForm from '../components/alarm/AlarmForm';
-import PremiumUpsell from '../components/premium/PremiumUpsell';
 import { getNextAlarmDate, getTimeUntilAlarm, formatTimeDisplay } from '../utils/timeUtils';
 import { DIFFICULTY_MODES } from '../utils/constants';
 
@@ -13,13 +12,13 @@ export default function Home() {
   const navigate = useNavigate();
   const { alarm, createAlarm, updateAlarm, deleteAlarm, toggleAlarm, isAlarmSet } = useAlarm();
   const { settings, isOnboardingComplete } = useSettings();
-  const { isPremium, showUpsell, upsellFeature, triggerUpsell, dismissUpsell } = usePremium();
   const { isReady: isModelReady } = useLLM();
 
+  // Show banner ad at bottom
+  useBannerAd();
+
   const [showAlarmForm, setShowAlarmForm] = useState(false);
-  const [editingAlarm, setEditingAlarm] = useState(null);
   const [timeUntil, setTimeUntil] = useState('');
-  const [localShowUpsell, setLocalShowUpsell] = useState(false);
 
   // Check onboarding status
   useEffect(() => {
@@ -42,12 +41,10 @@ export default function Home() {
   }, [alarm]);
 
   const handleAddAlarm = () => {
-    setEditingAlarm(null);
     setShowAlarmForm(true);
   };
 
   const handleEditAlarm = () => {
-    setEditingAlarm(alarm);
     setShowAlarmForm(true);
   };
 
@@ -58,7 +55,6 @@ export default function Home() {
       await createAlarm(alarmData.time, alarmData.difficulty);
     }
     setShowAlarmForm(false);
-    setEditingAlarm(null);
   };
 
   const handleDeleteAlarm = async () => {
@@ -81,13 +77,6 @@ export default function Home() {
 
   const difficultyInfo = getDifficultyInfo();
 
-  // Handle upsell state
-  const isUpsellOpen = showUpsell || localShowUpsell;
-  const handleDismissUpsell = () => {
-    dismissUpsell();
-    setLocalShowUpsell(false);
-  };
-
   return (
     <div className="min-h-screen bg-[#050505] flex flex-col">
       {/* Header */}
@@ -104,13 +93,7 @@ export default function Home() {
         <div className="flex items-center gap-2">
           {/* Dashboard Button */}
           <button
-            onClick={() => {
-              if (isPremium) {
-                navigate('/dashboard');
-              } else {
-                setLocalShowUpsell(true);
-              }
-            }}
+            onClick={() => navigate('/dashboard')}
             className="relative w-10 h-10 bg-[#0D0D0D] hover:bg-[#1A1A1A] rounded-2xl flex items-center justify-center transition-all border border-[#222222]"
           >
             <svg className="w-[18px] h-[18px] text-[#B0B0B0]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -119,14 +102,6 @@ export default function Home() {
               <rect x="3" y="14" width="7" height="7" rx="1"/>
               <rect x="14" y="14" width="7" height="7" rx="1"/>
             </svg>
-            {/* Lock badge for free users */}
-            {!isPremium && (
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#D4A053] rounded-full flex items-center justify-center">
-                <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C9.24 2 7 4.24 7 7v2H6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2h-1V7c0-2.76-2.24-5-5-5zm0 2c1.66 0 3 1.34 3 3v2H9V7c0-1.66 1.34-3 3-3z"/>
-                </svg>
-              </div>
-            )}
           </button>
 
           {/* Settings Button */}
@@ -282,52 +257,18 @@ export default function Home() {
         )}
       </main>
 
-      {/* Premium Upsell - Bottom */}
-      {!isPremium && (
-        <div className="px-5 pb-6 pt-4">
-          <button
-            onClick={() => setLocalShowUpsell(true)}
-            className="w-full bg-gradient-to-r from-[#D4A053]/10 to-[#C08B3F]/10 hover:from-[#D4A053]/20 hover:to-[#C08B3F]/20 border border-[#D4A053]/20 rounded-2xl p-4 transition-all"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-[#D4A053] to-[#C08B3F] rounded-xl flex items-center justify-center shadow-lg shadow-[#D4A053]/25">
-                  <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                  </svg>
-                </div>
-                <div className="text-left">
-                  <p className="text-[#F1F1F1] font-semibold">Upgrade to Premium</p>
-                  <p className="text-[#B0B0B0] text-sm">Unlock all modes & features</p>
-                </div>
-              </div>
-              <svg className="w-5 h-5 text-[#D4A053]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </div>
-          </button>
-        </div>
-      )}
+      {/* Spacer for native banner ad overlay */}
+      <div className="h-16 flex-shrink-0" />
 
       {/* Alarm Form Modal - Conditionally rendered to reset state on each open */}
       {showAlarmForm && (
         <AlarmForm
           alarm={alarm}
           onSave={handleSaveAlarm}
-          onCancel={() => {
-            setShowAlarmForm(false);
-            setEditingAlarm(null);
-          }}
+          onCancel={() => setShowAlarmForm(false)}
           isOpen={showAlarmForm}
         />
       )}
-
-      {/* Premium Upsell Modal */}
-      <PremiumUpsell
-        isOpen={isUpsellOpen}
-        onClose={handleDismissUpsell}
-        feature={upsellFeature}
-      />
     </div>
   );
 }

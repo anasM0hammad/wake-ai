@@ -303,7 +303,6 @@ export default function AlarmRingingPage() {
         <AlarmSuccess
           stats={sessionStats}
           onClose={handleClose}
-          isPremium={settings.isPremium}
         />
       );
 

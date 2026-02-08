@@ -1,7 +1,7 @@
 export const DIFFICULTY = {
-  EASY: { name: 'Easy', questions: 1, premium: false },
-  MEDIUM: { name: 'Medium', questions: 3, premium: true },
-  HARD: { name: 'Hard', questions: 5, premium: true }
+  EASY: { name: 'Easy', questions: 1 },
+  MEDIUM: { name: 'Medium', questions: 3 },
+  HARD: { name: 'Hard', questions: 5 }
 };
 
 export const MAX_WRONG_ANSWERS = 5;
@@ -15,9 +15,9 @@ export const CATEGORIES = {
 };
 
 export const TONES = {
-  GENTLE: { id: 'gentle', name: 'Gentle', file: 'gentle.mp3', premium: false },
-  CLASSIC: { id: 'classic', name: 'Classic', file: 'classic.mp3', premium: true },
-  INTENSE: { id: 'intense', name: 'Intense', file: 'intense.mp3', premium: true }
+  GENTLE: { id: 'gentle', name: 'Gentle', file: 'gentle.mp3' },
+  CLASSIC: { id: 'classic', name: 'Classic', file: 'classic.mp3' },
+  INTENSE: { id: 'intense', name: 'Intense', file: 'intense.mp3' }
 };
 
 export const MODEL_CONFIG = {
@@ -38,9 +38,9 @@ export const AD_INTERSTITIAL_DELAY_MS = 1000;
 // Settings page constants with labels and descriptions
 // Keys match DIFFICULTY constant (uppercase) for consistency
 export const DIFFICULTY_MODES = {
-  EASY: { label: 'Easy', questions: 1, timePerQuestion: 60, premium: false },
-  MEDIUM: { label: 'Medium', questions: 3, timePerQuestion: 45, premium: true },
-  HARD: { label: 'Hard', questions: 5, timePerQuestion: 30, premium: true }
+  EASY: { label: 'Easy', questions: 1, timePerQuestion: 60 },
+  MEDIUM: { label: 'Medium', questions: 3, timePerQuestion: 45 },
+  HARD: { label: 'Hard', questions: 5, timePerQuestion: 30 }
 };
 
 export const QUESTION_CATEGORIES = {
@@ -51,7 +51,7 @@ export const QUESTION_CATEGORIES = {
 };
 
 export const ALARM_TONES = {
-  gentle: { label: 'Gentle Wake', file: 'gentle.mp3', premium: false },
-  classic: { label: 'Classic Alarm', file: 'classic.mp3', premium: true },
-  intense: { label: 'Intense', file: 'intense.mp3', premium: true }
+  gentle: { label: 'Gentle Wake', file: 'gentle.mp3' },
+  classic: { label: 'Classic Alarm', file: 'classic.mp3' },
+  intense: { label: 'Intense', file: 'intense.mp3' }
 };

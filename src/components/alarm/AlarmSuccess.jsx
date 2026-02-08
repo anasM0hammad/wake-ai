@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useInterstitialAd } from '../../hooks/useAds';
+import { AD_INTERSTITIAL_DELAY_MS } from '../../utils/constants';
 
 const MOTIVATIONAL_MESSAGES = [
   "Rise and shine! You've conquered the morning!",
@@ -16,15 +18,23 @@ const MOTIVATIONAL_MESSAGES = [
 export default function AlarmSuccess({
   stats,
   onClose,
-  isPremium
 }) {
   const [message] = useState(() =>
     MOTIVATIONAL_MESSAGES[Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length)]
   );
   const [showConfetti, setShowConfetti] = useState(true);
+  const { showInterstitial } = useInterstitialAd();
 
   useEffect(() => {
     const timer = setTimeout(() => setShowConfetti(false), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show interstitial ad shortly after success screen renders
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      showInterstitial();
+    }, AD_INTERSTITIAL_DELAY_MS);
     return () => clearTimeout(timer);
   }, []);
 
@@ -126,15 +136,6 @@ export default function AlarmSuccess({
           </div>
         )}
       </div>
-
-      {/* Ad placeholder for free users */}
-      {!isPremium && (
-        <div className="px-6 mb-4">
-          <div className="bg-[#0D0D0D] border border-[#1A1A1A] rounded-xl p-4 text-center">
-            <p className="text-[#636363] text-sm">Ad placeholder</p>
-          </div>
-        </div>
-      )}
 
       {/* Close button */}
       <div className="px-6 pb-8">

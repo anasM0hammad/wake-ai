@@ -1,16 +1,29 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStats } from '../hooks/useStats';
-import { usePremium } from '../hooks/usePremium';
-import { Card, Button } from '../components/common';
-import { PremiumUpsell } from '../components/premium';
+import { useBannerAd, useRewardedAd } from '../hooks/useAds';
+import { Card } from '../components/common';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { stats } = useStats();
-  const { isPremium, showUpsell, setShowUpsell, triggerUpsell } = usePremium();
+  const { showRewardedAd, isRewardedReady, rewarded } = useRewardedAd();
+  const [hasWatchedAd, setHasWatchedAd] = useState(false);
 
-  // Check premium access
-  if (!isPremium) {
+  // Show banner ad at bottom
+  useBannerAd();
+
+  const statsUnlocked = rewarded || hasWatchedAd;
+
+  const handleWatchAd = async () => {
+    const result = await showRewardedAd();
+    if (result) {
+      setHasWatchedAd(true);
+    }
+  };
+
+  // Gate: user must watch a rewarded video to view stats
+  if (!statsUnlocked) {
     return (
       <div className="min-h-screen bg-[#050505]">
         {/* Header */}
@@ -29,39 +42,49 @@ export default function Dashboard() {
         </header>
 
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
-          <div className="w-20 h-20 rounded-full bg-[#D4A053]/10 flex items-center justify-center mb-6">
-            <svg className="w-10 h-10 text-[#D4A053]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          <div className="w-20 h-20 rounded-full bg-[#10B981]/10 flex items-center justify-center mb-6">
+            <svg className="w-10 h-10 text-[#10B981]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
             </svg>
           </div>
           <h2 className="text-xl font-bold text-[#F1F1F1] mb-2">
-            Premium Feature
+            Your Wake-up Stats
           </h2>
-          <p className="text-[#636363] mb-6 max-w-sm">
-            Unlock detailed statistics and insights with WakeAI Premium.
+          <p className="text-[#636363] mb-8 max-w-sm">
+            Watch a short video to unlock your detailed performance stats and streaks.
           </p>
-          <Button
-            variant="primary"
-            onClick={() => triggerUpsell('dashboard')}
+          <button
+            onClick={handleWatchAd}
+            disabled={!isRewardedReady}
+            className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold text-lg transition-all active:scale-95 ${
+              isRewardedReady
+                ? 'bg-[#10B981] hover:bg-[#059669] text-white shadow-lg shadow-[#10B981]/25'
+                : 'bg-[#161616] text-[#636363] cursor-not-allowed'
+            }`}
           >
-            Upgrade to Premium
-          </Button>
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+            {isRewardedReady ? 'Watch & Unlock' : 'Loading Ad...'}
+          </button>
         </div>
 
-        <PremiumUpsell
-          isOpen={showUpsell}
-          onClose={() => setShowUpsell(false)}
-        />
+        {/* Spacer for native banner ad overlay */}
+        <div className="h-16 flex-shrink-0" />
       </div>
     );
   }
 
-  const totalAlarms = stats.totalSuccessfulWakeups + stats.totalKillSwitchUses + stats.totalFailedAlarms;
+  // Stats are unlocked — show the full dashboard
+  const totalAlarms = (stats.wins || 0) + (stats.kills || 0) + (stats.fails || 0);
   const successRate = totalAlarms > 0
-    ? Math.round((stats.totalSuccessfulWakeups / totalAlarms) * 100)
+    ? Math.round(((stats.wins || 0) / totalAlarms) * 100)
     : 0;
-  const avgQuestionsPerSession = stats.totalSuccessfulWakeups > 0
-    ? Math.round(stats.totalQuestionsAnswered / stats.totalSuccessfulWakeups)
+  const avgQuestionsPerSession = (stats.wins || 0) > 0
+    ? Math.round((stats.totalQuestionsAnswered || 0) / stats.wins)
     : 0;
 
   return (
@@ -121,7 +144,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 gap-4">
           <Card className="text-center py-6">
             <div className="text-3xl font-bold text-[#34D399] mb-1">
-              {stats.totalSuccessfulWakeups}
+              {stats.wins || 0}
             </div>
             <div className="text-sm text-[#636363]">
               Successful Wakeups
@@ -130,7 +153,7 @@ export default function Dashboard() {
 
           <Card className="text-center py-6">
             <div className="text-3xl font-bold text-[#B0B0B0] mb-1">
-              {stats.totalKillSwitchUses}
+              {stats.kills || 0}
             </div>
             <div className="text-sm text-[#636363]">
               Kill Switch Uses
@@ -139,7 +162,7 @@ export default function Dashboard() {
 
           <Card className="text-center py-6">
             <div className="text-3xl font-bold text-[#EF4444] mb-1">
-              {stats.totalFailedAlarms}
+              {stats.fails || 0}
             </div>
             <div className="text-sm text-[#636363]">
               Failed Alarms
@@ -148,7 +171,7 @@ export default function Dashboard() {
 
           <Card className="text-center py-6">
             <div className="text-3xl font-bold text-[#10B981] mb-1">
-              {stats.totalQuestionsAnswered}
+              {stats.totalQuestionsAnswered || 0}
             </div>
             <div className="text-sm text-[#636363]">
               Questions Answered
@@ -243,6 +266,9 @@ export default function Dashboard() {
           </div>
         </Card>
       </div>
+
+      {/* Spacer for native banner ad overlay */}
+      <div className="h-16 flex-shrink-0" />
     </div>
   );
 }
