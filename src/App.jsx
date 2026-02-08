@@ -79,6 +79,7 @@ import { getSettings } from './services/storage/settingsStorage';
 import { initializeModel } from './services/llm/webllm';
 import { initializeBackgroundService, cleanupBackgroundService } from './services/alarm/backgroundService';
 import { setupNotificationChannel, setOnAlarmTrigger, removeNotificationListeners } from './services/alarm/alarmScheduler';
+import { initializeQuestionPool } from './services/llm/questionPool';
 
 // Inner component that has access to navigation
 function AppContent() {
@@ -114,17 +115,14 @@ function AppContent() {
     // Initialize background service (includes preload checking)
     await initializeBackgroundService();
 
-    // Initialize LLM if model was previously downloaded
+    // Initialize question pool (loads model and generates questions in phases)
     const settings = getSettings();
     if (settings.modelDownloaded) {
-      console.log('Model was downloaded, initializing...');
-      initializeModel().catch(err => {
-        console.warn('Failed to initialize model:', err);
+      console.log('Model was downloaded, starting question pool initialization...');
+      initializeQuestionPool().catch(err => {
+        console.warn('Failed to initialize question pool:', err);
       });
     }
-
-    // Note: Initial preload check is handled by initializeBackgroundService()
-    // to avoid duplicate calls
 
     console.log('WakeAI app initialized');
   };
