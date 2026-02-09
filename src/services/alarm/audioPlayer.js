@@ -148,6 +148,7 @@ export async function playAlarm(toneName = 'gentle', loop = true) {
       src: [toneFile],
       loop,
       volume: 1.0,
+      html5: false, // Force Web Audio API so hardware volume buttons don't affect alarm
       onplay: () => {
         console.log('[AudioPlayer] Alarm playing:', toneFile);
         resolve(currentSound);
