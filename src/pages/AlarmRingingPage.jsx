@@ -96,10 +96,10 @@ export default function AlarmRingingPage() {
   const handleSuccess = useCallback(async () => {
     clearTimeout(timeoutRef.current);
 
-    // Use refs to get current values (avoids stale closure issues)
+    // Use refs to get current values (already updated in handleAnswer before this is called)
     const stats = {
-      questionsAnswered: correctCountRef.current + wrongCountRef.current + 1,
-      questionsCorrect: correctCountRef.current + 1,
+      questionsAnswered: correctCountRef.current + wrongCountRef.current,
+      questionsCorrect: correctCountRef.current,
       duration: Date.now() - startTime
     };
 

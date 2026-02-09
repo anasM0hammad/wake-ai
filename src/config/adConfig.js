@@ -1,27 +1,30 @@
 /**
  * AdMob Configuration
  *
- * Replace these TEST IDs with your real AdMob IDs from https://admob.google.com
- * Test IDs are safe to use during development — they show test ads only.
+ * In development, Google's official test IDs are used automatically.
+ * For production, set VITE_ADMOB_* variables in .env.production.local:
  *
- * To get your real IDs:
- * 1. Create an AdMob account at https://admob.google.com
- * 2. Register your app (com.wakeai.app)
- * 3. Create ad units: Banner, Interstitial, and Rewarded
- * 4. Replace the IDs below with your real ones
- * 5. Also update APPLICATION_ID in android/app/src/main/AndroidManifest.xml
+ *   VITE_ADMOB_APP_ID=ca-app-pub-XXXXX~YYYYY
+ *   VITE_ADMOB_BANNER_ID=ca-app-pub-XXXXX/YYYYY
+ *   VITE_ADMOB_INTERSTITIAL_ID=ca-app-pub-XXXXX/YYYYY
+ *   VITE_ADMOB_REWARDED_ID=ca-app-pub-XXXXX/YYYYY
+ *
+ * Also update APPLICATION_ID in android/app/src/main/AndroidManifest.xml
+ * to match VITE_ADMOB_APP_ID for production builds.
  */
 
-// Google AdMob Test IDs (safe for development)
+const isDev = import.meta.env.DEV;
+
+// Google AdMob official test IDs (safe for development)
+const TEST_APP_ID = 'ca-app-pub-3940256099942544~3347511713';
+const TEST_BANNER_ID = 'ca-app-pub-3940256099942544/6300978111';
+const TEST_INTERSTITIAL_ID = 'ca-app-pub-3940256099942544/1033173712';
+const TEST_REWARDED_ID = 'ca-app-pub-3940256099942544/5224354917';
+
 export const AD_CONFIG = {
-  // App-level test ID (also set in AndroidManifest.xml)
-  APP_ID: 'ca-app-pub-3940256099942544~3347511713',
-
-  // Ad unit IDs — replace with your real IDs for production
-  BANNER_ID: 'ca-app-pub-3940256099942544/6300978111',
-  INTERSTITIAL_ID: 'ca-app-pub-3940256099942544/1033173712',
-  REWARDED_ID: 'ca-app-pub-3940256099942544/5224354917',
-
-  // Set to false in production
-  IS_TESTING: true,
+  APP_ID: import.meta.env.VITE_ADMOB_APP_ID || TEST_APP_ID,
+  BANNER_ID: import.meta.env.VITE_ADMOB_BANNER_ID || TEST_BANNER_ID,
+  INTERSTITIAL_ID: import.meta.env.VITE_ADMOB_INTERSTITIAL_ID || TEST_INTERSTITIAL_ID,
+  REWARDED_ID: import.meta.env.VITE_ADMOB_REWARDED_ID || TEST_REWARDED_ID,
+  IS_TESTING: isDev,
 };
