@@ -91,10 +91,10 @@ export default function Settings() {
       // Silently ignore preview errors (e.g. on web with no audio files)
     });
 
-    // Auto-stop after 3 seconds
+    // Auto-stop after 15 seconds
     tonePreviewRef.current = setTimeout(() => {
       stopAlarm();
-    }, 3000);
+    }, 15000);
   }, [updateSetting]);
 
   const handleDifficultySelect = (difficultyKey) => {
