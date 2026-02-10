@@ -23,10 +23,11 @@ let currentSession = null;
 let activeAlarm = null;
 
 /**
- * Get questions for an alarm from the pre-generated pool
- * Uses questions generated on app start, supplements with fallback if needed
+ * Map questions from pool to an alarm in questionStorage.
+ * This is synchronous (pool is always pre-filled) and runs
+ * inline with alarm create/update — NOT fire-and-forget.
  */
-async function prepareQuestionsForAlarm(alarm) {
+function prepareQuestionsForAlarm(alarm) {
   const settings = getSettings();
   const difficulty = alarm.difficulty || settings.difficulty || 'EASY';
   const categories = settings.selectedCategories || ['math'];
@@ -58,11 +59,11 @@ async function prepareQuestionsForAlarm(alarm) {
 
   saveQuestionSet({
     alarmId: alarm.id,
-    difficulty: difficulty,
-    categories: categories,
-    questions: questions,
+    difficulty,
+    categories,
+    questions,
     generatedAt: Date.now(),
-    source: source
+    source
   });
 
   console.log('[AlarmManager] Questions saved:', questions.length, 'source:', source);
@@ -85,10 +86,8 @@ export async function createAlarm(time, difficulty = null) {
   saveAlarm(alarm);
   await scheduleAlarm(alarm);
 
-  // Prepare questions from pool in the background (fire and forget - don't await)
-  prepareQuestionsForAlarm(alarm).catch(e => {
-    console.error('[AlarmManager] Background question preparation failed:', e);
-  });
+  // Map questions from pool to this alarm (synchronous — pool is always pre-filled)
+  prepareQuestionsForAlarm(alarm);
 
   return alarm;
 }
@@ -122,29 +121,39 @@ export async function updateAlarm(id, updates) {
     await cancelAlarm(id);
   }
 
-  // Check if difficulty changed - if so, regenerate questions
+  // Rebalance questions if difficulty or categories changed
+  const settings = getSettings();
   const newDifficulty = updatedAlarm.difficulty;
-  if (previousDifficulty !== newDifficulty) {
-    console.log('[AlarmManager] Difficulty changed from', previousDifficulty, 'to', newDifficulty);
+  const newCategories = settings.selectedCategories || ['math'];
+  const currentSet = getQuestionSet();
+  const newCount = getRequiredQuestionCount(newDifficulty);
 
-    // Check if we need more questions
-    const currentSet = getQuestionSet();
-    const newCount = getRequiredQuestionCount(newDifficulty);
+  const difficultyChanged = previousDifficulty !== newDifficulty;
+  const categoriesChanged = currentSet &&
+    JSON.stringify([...(currentSet.categories || [])].sort()) !==
+    JSON.stringify([...newCategories].sort());
 
-    if (currentSet && currentSet.questions && currentSet.questions.length >= newCount) {
-      // We have enough questions, just update metadata
+  if (difficultyChanged || categoriesChanged) {
+    if (difficultyChanged) {
+      console.log('[AlarmManager] Difficulty changed from', previousDifficulty, 'to', newDifficulty);
+    }
+    if (categoriesChanged) {
+      console.log('[AlarmManager] Categories changed');
+    }
+
+    if (!difficultyChanged && !categoriesChanged &&
+        currentSet && currentSet.questions && currentSet.questions.length >= newCount) {
+      // We have enough questions and nothing changed — update metadata only
       saveQuestionSet({
         ...currentSet,
         difficulty: newDifficulty,
         alarmId: updatedAlarm.id,
         generatedAt: Date.now()
       });
-      console.log('[AlarmManager] Reusing existing questions, updated difficulty metadata');
+      console.log('[AlarmManager] Reusing existing questions, updated metadata');
     } else {
-      // Need more questions - get from pool
-      prepareQuestionsForAlarm(updatedAlarm).catch(e => {
-        console.error('[AlarmManager] Background question preparation failed:', e);
-      });
+      // Re-pull from pool with new config
+      prepareQuestionsForAlarm(updatedAlarm);
     }
   }
 
