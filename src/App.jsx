@@ -89,6 +89,7 @@ import { setupNotificationChannel, setOnAlarmTrigger, removeNotificationListener
 import { initializeQuestionPool } from './services/llm/questionPool';
 import { initializeModel, unloadModel } from './services/llm/webllm';
 import { initializeAds } from './services/ad';
+import { checkLaunchIntent, addAlarmFiredListener } from './services/alarm/nativeAlarm';
 
 // Inner component that has access to navigation
 function AppContent() {
@@ -130,8 +131,11 @@ function AppContent() {
     // Set up notification channel for alarms
     await setupNotificationChannel();
 
-    // Set up notification listeners
+    // Set up notification listeners (LocalNotifications — web fallback)
     setupNotificationListeners();
+
+    // Set up native alarm event listener (Android)
+    setupNativeAlarmListener();
 
     // Set up app lifecycle listeners
     setupAppLifecycleListeners();
@@ -145,6 +149,9 @@ function AppContent() {
     initializeQuestionPool().catch(err => {
       console.warn('Failed to initialize question pool:', err);
     });
+
+    // Check if app was launched by a native alarm (cold start)
+    checkNativeAlarmLaunch();
 
     console.log('WakeAI app initialized');
   };
@@ -166,6 +173,35 @@ function AppContent() {
       replace: true,
       state: { alarm: alarmData }
     });
+  };
+
+  /**
+   * Listen for native alarm events (warm start — app already in memory).
+   * When AlarmService fires and the full-screen intent brings the app to front,
+   * MainActivity fires a JS event via the plugin.
+   */
+  const setupNativeAlarmListener = () => {
+    addAlarmFiredListener((data) => {
+      console.log('[App] Native alarm fired event:', data);
+      navigate('/alarm-ringing', { replace: true });
+    });
+  };
+
+  /**
+   * Check if the app was cold-started by an alarm full-screen intent.
+   * On cold start the bridge isn't ready when the intent arrives, so
+   * MainActivity sets a flag that we poll here.
+   */
+  const checkNativeAlarmLaunch = async () => {
+    try {
+      const { alarmFired } = await checkLaunchIntent();
+      if (alarmFired) {
+        console.log('[App] App was launched by alarm — navigating to ringing');
+        navigate('/alarm-ringing', { replace: true });
+      }
+    } catch (err) {
+      console.warn('[App] checkLaunchIntent failed (expected on web):', err);
+    }
   };
 
   const setupAppLifecycleListeners = () => {

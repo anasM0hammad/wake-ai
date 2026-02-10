@@ -1,6 +1,11 @@
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { getNextAlarmDate } from '../../utils/timeUtils';
 import { getSettings } from '../storage/settingsStorage';
+import {
+  isNativeAlarmAvailable,
+  scheduleNativeAlarm,
+  cancelNativeAlarm
+} from './nativeAlarm';
 
 const ALARM_CHANNEL_ID = 'wakeai-alarm-channel';
 const ALARM_CHANNEL_NAME = 'WakeAI Alarms';
@@ -76,15 +81,32 @@ export async function scheduleAlarm(alarm) {
   }
 
   try {
-    // Cancel any existing notification for this alarm
+    // Cancel any existing alarm first
     await cancelAlarm(alarm.id);
 
     const alarmDate = getNextAlarmDate(alarm.time, alarm.lastFiredDate || null);
-    const notificationId = hashStringToInt(alarm.id);
+    const triggerAt = alarmDate.getTime();
 
     // Get user's selected tone from settings (default to 'gentle')
     const settings = getSettings();
     const toneName = settings.alarmTone || 'gentle';
+
+    // On Android: use native AlarmManager for reliable delivery even when
+    // the app is killed or the device is in Doze mode.
+    if (isNativeAlarmAvailable()) {
+      await scheduleNativeAlarm({
+        alarmId: alarm.id,
+        time: alarm.time,
+        tone: toneName,
+        vibration: settings.vibrationEnabled !== false,
+        triggerAt
+      });
+      console.log('[AlarmScheduler] Native alarm scheduled for', alarmDate.toLocaleString());
+      return true;
+    }
+
+    // On web: use LocalNotifications (best-effort, JS timer is the real fallback)
+    const notificationId = hashStringToInt(alarm.id);
     const soundFile = `${toneName}.mp3`;
 
     await LocalNotifications.schedule({
@@ -112,6 +134,7 @@ export async function scheduleAlarm(alarm) {
       ]
     });
 
+    console.log('[AlarmScheduler] Web notification scheduled for', alarmDate.toLocaleString());
     return true;
   } catch (error) {
     console.error('Failed to schedule alarm:', error);
@@ -125,6 +148,10 @@ export async function cancelAlarm(alarmId) {
   }
 
   try {
+    // Cancel native alarm (no-op on web)
+    await cancelNativeAlarm();
+
+    // Also cancel LocalNotification (for web fallback or if previously scheduled)
     const notificationId = hashStringToInt(alarmId);
     await LocalNotifications.cancel({
       notifications: [{ id: notificationId }]

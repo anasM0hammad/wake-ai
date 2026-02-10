@@ -21,6 +21,7 @@ import {
   playAlarmWithVibration,
   stopAlarmWithVibration
 } from '../services/alarm/audioPlayer';
+import { isNativeAlarmAvailable, dismissNativeAlarm } from '../services/alarm/nativeAlarm';
 import { recordWin, recordKill, recordFail } from '../services/storage/statsStorage';
 import { getSettings } from '../services/storage/settingsStorage';
 
@@ -89,15 +90,18 @@ export function useAlarm() {
     setActiveAlarmState(alarmToUse);
     setSession(newSession);
 
-    // Start audio (and vibration if enabled)
-    try {
-      if (settings.vibrationEnabled) {
-        await playAlarmWithVibration(settings.alarmTone);
-      } else {
-        await playAlarm(settings.alarmTone);
+    // On Android the native AlarmService already handles audio + vibration.
+    // Only play JS audio on web where there is no native service.
+    if (!isNativeAlarmAvailable()) {
+      try {
+        if (settings.vibrationEnabled) {
+          await playAlarmWithVibration(settings.alarmTone);
+        } else {
+          await playAlarm(settings.alarmTone);
+        }
+      } catch (error) {
+        console.error('Failed to play alarm:', error);
       }
-    } catch (error) {
-      console.error('Failed to play alarm:', error);
     }
 
     return newSession;
@@ -105,6 +109,13 @@ export function useAlarm() {
 
   // Dismiss alarm with result
   const dismiss = useCallback(async (result = 'win') => {
+    // Stop native alarm service (audio + vibration) on Android
+    if (isNativeAlarmAvailable()) {
+      await dismissNativeAlarm().catch(err =>
+        console.warn('Native dismiss failed:', err)
+      );
+    }
+    // Stop JS audio + vibration (no-op if not playing)
     stopAlarmWithVibration();
 
     const sessionSummary = endAlarmSession(result);
