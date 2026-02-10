@@ -13,6 +13,7 @@ import { resetAlarmFiring } from '../services/alarm/alarmTimer';
 import { getQuestionSet, deleteQuestionSet, getRequiredQuestionCount } from '../services/storage/questionStorage';
 import { prepareQuestionsForAlarm } from '../services/alarm/alarmManager';
 import { getAlarm } from '../services/storage/alarmStorage';
+import { lockVolume, unlockVolume } from '../services/alarm/volumeGuard';
 
 const STATES = {
   RINGING: 'ringing',
@@ -75,6 +76,12 @@ export default function AlarmRingingPage() {
   const alarmData = getAlarmData();
   const difficulty = alarmData?.difficulty || settings.difficulty || 'EASY';
   const requiredCorrect = DIFFICULTY[difficulty]?.questions || 1;
+
+  // Lock volume buttons on mount, unlock on unmount
+  useEffect(() => {
+    lockVolume();
+    return () => unlockVolume();
+  }, []);
 
   // Initialize alarm on mount
   useEffect(() => {
@@ -217,6 +224,7 @@ export default function AlarmRingingPage() {
   // Handle kill switch
   const handleKillSwitch = useCallback(async () => {
     clearTimeout(timeoutRef.current);
+    unlockVolume();
     await dismiss('kill');
     // Reset alarm firing flag so future alarms can fire
     resetAlarmFiring();
@@ -238,6 +246,7 @@ export default function AlarmRingingPage() {
 
   // Handle close (after success or failure)
   const handleClose = useCallback(() => {
+    unlockVolume();
     // Reset alarm firing flag so future alarms can fire
     resetAlarmFiring();
     // Clear session storage
