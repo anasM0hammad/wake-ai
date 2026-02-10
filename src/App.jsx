@@ -106,12 +106,23 @@ function AppContent() {
     return () => {
       cleanupBackgroundService();
       removeNotificationListeners();
-      unloadModel().catch(() => {});
+      // NOTE: Do NOT unload model here. React StrictMode runs cleanup on
+      // simulated unmount, which would kill the model mid-load. The initRef
+      // guard then prevents re-initialization on remount.
+      // Model lifecycle is managed solely by the foreground/background listener.
     };
   }, []);
 
   const initializeApp = async () => {
     console.log('Initializing WakeAI app...');
+
+    // Start model loading FIRST — fire-and-forget so it runs in parallel
+    // with other init steps. Model loading is the slowest operation and
+    // should not wait behind ads, notifications, or background service init.
+    console.log('Starting model load...');
+    initializeModel().catch(err => {
+      console.warn('Model load failed:', err);
+    });
 
     // Initialize AdMob SDK
     await initializeAds();
