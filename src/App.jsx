@@ -84,7 +84,6 @@ import { Home, Onboarding, AlarmRingingPage, Settings, Dashboard } from './pages
 import { ErrorBoundary, AlarmErrorBoundary } from './components/common';
 import AlarmMonitor from './components/AlarmMonitor';
 import { isOnboardingComplete } from './services/storage/settingsStorage';
-import { getSettings } from './services/storage/settingsStorage';
 import { initializeBackgroundService, cleanupBackgroundService } from './services/alarm/backgroundService';
 import { setupNotificationChannel, setOnAlarmTrigger, removeNotificationListeners } from './services/alarm/alarmScheduler';
 import { initializeQuestionPool } from './services/llm/questionPool';
@@ -128,13 +127,11 @@ function AppContent() {
     await initializeBackgroundService();
 
     // Initialize question pool (loads model and generates questions in phases)
-    const settings = getSettings();
-    if (settings.modelDownloaded) {
-      console.log('Model was downloaded, starting question pool initialization...');
-      initializeQuestionPool().catch(err => {
-        console.warn('Failed to initialize question pool:', err);
-      });
-    }
+    // Always attempt - the pool service handles fallback gracefully if model fails
+    console.log('Starting question pool initialization...');
+    initializeQuestionPool().catch(err => {
+      console.warn('Failed to initialize question pool:', err);
+    });
 
     console.log('WakeAI app initialized');
   };

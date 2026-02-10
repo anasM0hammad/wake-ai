@@ -5,6 +5,7 @@ import {
   getStatus,
   getLoadingProgress,
   addProgressListener,
+  wasModelEverReady,
   MODEL_STATUS
 } from '../services/llm/webllm';
 import { generateQuestionBatch } from '../services/llm/questionGenerator';
@@ -14,6 +15,7 @@ export function useLLM() {
   const [modelStatus, setModelStatus] = useState(getStatus());
   const [loadingProgress, setLoadingProgress] = useState(getLoadingProgress());
   const [error, setError] = useState(null);
+  const [everReady, setEverReady] = useState(wasModelEverReady());
   const initializingRef = useRef(false);
 
   useEffect(() => {
@@ -21,6 +23,9 @@ export function useLLM() {
     const unsubscribe = addProgressListener((state) => {
       setModelStatus(state.status);
       setLoadingProgress(state.progress);
+      if (state.wasEverReady) {
+        setEverReady(true);
+      }
       if (state.error) {
         setError(state.error);
       }
@@ -29,6 +34,7 @@ export function useLLM() {
     // Sync initial state
     setModelStatus(getStatus());
     setLoadingProgress(getLoadingProgress());
+    setEverReady(wasModelEverReady());
 
     return unsubscribe;
   }, []);
@@ -85,6 +91,8 @@ export function useLLM() {
   const isReady = modelStatus === MODEL_STATUS.READY;
   const isLoading = modelStatus === MODEL_STATUS.DOWNLOADING || modelStatus === MODEL_STATUS.LOADING;
   const hasError = modelStatus === MODEL_STATUS.ERROR;
+  // True if model is currently ready OR was successfully loaded at any point this session
+  const hasAISupport = isReady || everReady;
 
   return {
     modelStatus,
@@ -94,7 +102,8 @@ export function useLLM() {
     generateQuestions,
     isReady,
     isLoading,
-    hasError
+    hasError,
+    hasAISupport
   };
 }
 

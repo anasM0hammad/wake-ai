@@ -22,6 +22,7 @@ class WebLLMService {
     this.progress = { progress: 0, status: '' };
     this.errorMessage = null;
     this.listeners = new Set();
+    this._wasEverReady = false;
   }
 
   addProgressListener(callback) {
@@ -30,7 +31,8 @@ class WebLLMService {
     callback({
       status: this.status,
       progress: this.progress,
-      error: this.errorMessage
+      error: this.errorMessage,
+      wasEverReady: this._wasEverReady
     });
     return () => this.listeners.delete(callback);
   }
@@ -39,7 +41,8 @@ class WebLLMService {
     const state = {
       status: this.status,
       progress: { ...this.progress },
-      error: this.errorMessage
+      error: this.errorMessage,
+      wasEverReady: this._wasEverReady
     };
     // Use setTimeout to ensure React state updates trigger re-renders
     this.listeners.forEach(listener => {
@@ -116,6 +119,7 @@ class WebLLMService {
 
       await this.engine.reload(modelId);
 
+      this._wasEverReady = true;
       this._updateStatus(MODEL_STATUS.READY, { progress: 100, status: 'Model ready' });
       return true;
     } catch (error) {
@@ -131,6 +135,10 @@ class WebLLMService {
 
   isModelReady() {
     return this.status === MODEL_STATUS.READY && this.engine !== null;
+  }
+
+  wasEverReady() {
+    return this._wasEverReady;
   }
 
   getLoadingProgress() {
@@ -204,6 +212,10 @@ export function getRecommendedModel() {
 
 export function isModelReady() {
   return webLLMService.isModelReady();
+}
+
+export function wasModelEverReady() {
+  return webLLMService.wasEverReady();
 }
 
 export function getLoadingProgress() {

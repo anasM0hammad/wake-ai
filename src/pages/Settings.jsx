@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSettings } from '../hooks/useSettings';
 import { useBannerAd } from '../hooks/useAds';
 import { Button, Toggle, Modal, Card } from '../components/common';
 import { DIFFICULTY_MODES, QUESTION_CATEGORIES, ALARM_TONES } from '../utils/constants';
+import { playAlarm, stopAlarm } from '../services/alarm/audioPlayer';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -18,8 +19,18 @@ export default function Settings() {
   const inputRefs = useRef([]);
   const confirmInputRefs = useRef([]);
 
+  const tonePreviewRef = useRef(null);
+
   // Show banner ad at bottom
   useBannerAd();
+
+  // Stop tone preview on unmount
+  useEffect(() => {
+    return () => {
+      stopAlarm();
+      if (tonePreviewRef.current) clearTimeout(tonePreviewRef.current);
+    };
+  }, []);
 
   const updateSetting = (key, value) => {
     updateSettings({ [key]: value });
@@ -69,9 +80,22 @@ export default function Settings() {
     updateSetting('selectedCategories', newCategories);
   };
 
-  const handleToneSelect = (toneKey) => {
+  const handleToneSelect = useCallback((toneKey) => {
     updateSetting('alarmTone', toneKey);
-  };
+
+    // Stop any previous preview and play the selected tone once
+    stopAlarm();
+    if (tonePreviewRef.current) clearTimeout(tonePreviewRef.current);
+
+    playAlarm(toneKey, false).catch(() => {
+      // Silently ignore preview errors (e.g. on web with no audio files)
+    });
+
+    // Auto-stop after 3 seconds
+    tonePreviewRef.current = setTimeout(() => {
+      stopAlarm();
+    }, 3000);
+  }, [updateSetting]);
 
   const handleDifficultySelect = (difficultyKey) => {
     updateSetting('difficulty', difficultyKey);
