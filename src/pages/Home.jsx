@@ -12,7 +12,7 @@ export default function Home() {
   const navigate = useNavigate();
   const { alarm, createAlarm, updateAlarm, deleteAlarm, toggleAlarm, isAlarmSet } = useAlarm();
   const { settings, isOnboardingComplete } = useSettings();
-  const { isReady: isModelReady } = useLLM();
+  const { hasAISupport: isModelReady } = useLLM();
 
   // Show banner ad at bottom
   useBannerAd();
