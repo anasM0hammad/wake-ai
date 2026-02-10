@@ -6,22 +6,31 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.WindowManager;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
+
+    private static final String TAG = "MainActivity";
+    private static final String ALARM_FIRED_ACTION = "com.wakeai.app.ALARM_FIRED";
+
     private PowerManager.WakeLock wakeLock;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Register the VolumeGuard plugin before super (which initializes the bridge)
+        // Register plugins before super (which initializes the bridge)
         registerPlugin(VolumeGuardPlugin.class);
+        registerPlugin(WakeAIAlarmPlugin.class);
 
         super.onCreate(savedInstanceState);
 
         // Enable showing on lock screen for alarm functionality
         enableLockScreenSupport();
+
+        // Check if launched by alarm full-screen intent
+        handleAlarmIntent(getIntent());
     }
 
     /**
@@ -50,12 +59,43 @@ public class MainActivity extends BridgeActivity {
         // Re-apply lock screen flags when activity is brought to front
         // via notification while device is locked (singleTask launch mode)
         enableLockScreenSupport();
+
+        // Handle alarm intent when app is already running (warm start)
+        handleAlarmIntent(intent);
     }
 
     @Override
     public void onDestroy() {
         releaseWakeLock();
         super.onDestroy();
+    }
+
+    /**
+     * Check if the intent is an alarm full-screen intent and notify JS.
+     */
+    private void handleAlarmIntent(Intent intent) {
+        if (intent == null) return;
+
+        String action = intent.getAction();
+        if (!ALARM_FIRED_ACTION.equals(action)) return;
+
+        Log.i(TAG, "Alarm intent received");
+
+        // Re-apply lock screen support since this is an alarm waking the device
+        enableLockScreenSupport();
+
+        // Set flag for cold start detection (JS calls checkLaunchIntent)
+        WakeAIAlarmPlugin.launchedByAlarm = true;
+
+        // If bridge is ready (warm start), fire event immediately to JS
+        if (getBridge() != null) {
+            WakeAIAlarmPlugin plugin = getBridge().getPlugin("WakeAIAlarm");
+            if (plugin != null) {
+                Log.i(TAG, "Bridge ready — firing alarm event to JS");
+                ((WakeAIAlarmPlugin) plugin).fireAlarmEvent();
+            }
+        }
+        // For cold start, JS will call checkLaunchIntent() on init
     }
 
     /**
