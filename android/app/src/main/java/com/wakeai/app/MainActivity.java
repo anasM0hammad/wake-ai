@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.view.KeyEvent;
 import android.view.WindowManager;
 import com.getcapacitor.BridgeActivity;
 
@@ -14,10 +15,32 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Register the VolumeGuard plugin before super (which initializes the bridge)
+        registerPlugin(VolumeGuardPlugin.class);
+
         super.onCreate(savedInstanceState);
 
         // Enable showing on lock screen for alarm functionality
         enableLockScreenSupport();
+    }
+
+    /**
+     * Intercept hardware volume key presses.
+     * When VolumeGuard is locked (alarm is ringing), consume the events
+     * so the user cannot mute the alarm with the side buttons.
+     */
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (VolumeGuardPlugin.locked) {
+            int keyCode = event.getKeyCode();
+            if (keyCode == KeyEvent.KEYCODE_VOLUME_UP
+                    || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
+                    || keyCode == KeyEvent.KEYCODE_VOLUME_MUTE) {
+                // Consume the event — do nothing
+                return true;
+            }
+        }
+        return super.dispatchKeyEvent(event);
     }
 
     @Override
