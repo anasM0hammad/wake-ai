@@ -15,6 +15,9 @@ export const MODEL_STATUS = {
   ERROR: 'error'
 };
 
+const MAX_INIT_RETRIES = 2;
+const RETRY_DELAY_MS = 2000;
+
 class WebLLMService {
   constructor() {
     this.engine = null;
@@ -23,6 +26,8 @@ class WebLLMService {
     this.errorMessage = null;
     this.listeners = new Set();
     this._wasEverReady = false;
+    this._initPromise = null; // Guards against concurrent initialization
+    this._onReadyCallbacks = [];
   }
 
   addProgressListener(callback) {
@@ -37,6 +42,18 @@ class WebLLMService {
     return () => this.listeners.delete(callback);
   }
 
+  /**
+   * Register a one-time callback for when model becomes ready.
+   * If already ready, fires immediately.
+   */
+  onReady(callback) {
+    if (this.isModelReady()) {
+      callback();
+    } else {
+      this._onReadyCallbacks.push(callback);
+    }
+  }
+
   _notifyListeners() {
     const state = {
       status: this.status,
@@ -44,7 +61,6 @@ class WebLLMService {
       error: this.errorMessage,
       wasEverReady: this._wasEverReady
     };
-    // Use setTimeout to ensure React state updates trigger re-renders
     this.listeners.forEach(listener => {
       try {
         listener(state);
@@ -54,10 +70,20 @@ class WebLLMService {
     });
   }
 
+  _fireOnReadyCallbacks() {
+    const callbacks = this._onReadyCallbacks.splice(0);
+    callbacks.forEach(cb => {
+      try {
+        cb();
+      } catch (e) {
+        console.error('[WebLLM] Error in onReady callback:', e);
+      }
+    });
+  }
+
   _updateStatus(status, progress = null, error = null) {
     this.status = status;
     if (progress !== null) {
-      // Create new object to ensure React detects the change
       this.progress = { ...progress };
     }
     if (error !== null) {
@@ -68,41 +94,95 @@ class WebLLMService {
 
   async getRecommendedModel() {
     try {
-      // Use platform-appropriate RAM detection from deviceInfo
       const ramMB = await getDeviceRAM();
       console.log(`[WebLLM] Device RAM: ${ramMB}MB, threshold: ${MODEL_CONFIG.LARGE.ramThreshold}MB`);
 
-      // If RAM >= threshold (6GB), use large model
       if (ramMB >= MODEL_CONFIG.LARGE.ramThreshold) {
         console.log('[WebLLM] Using large model (1.5B)');
         return MODEL_OPTIONS.large;
       }
 
-      // Default to small model for lower RAM devices
       console.log('[WebLLM] Using small model (0.5B)');
       return MODEL_OPTIONS.small;
     } catch (error) {
       console.error('[WebLLM] Error detecting device RAM:', error);
-      // Default to small model if any uncertainty
       return MODEL_OPTIONS.small;
     }
   }
 
+  /**
+   * Initialize the model with concurrency guard and retry logic.
+   * Multiple callers get the same promise — only one init runs at a time.
+   */
   async initializeModel() {
+    // Already ready — nothing to do
+    if (this.isModelReady()) {
+      console.log('[WebLLM] Model already ready, skipping init');
+      return true;
+    }
+
+    // Already initializing — return the existing promise so callers deduplicate
+    if (this._initPromise) {
+      console.log('[WebLLM] Init already in progress, waiting on existing promise');
+      return this._initPromise;
+    }
+
+    this._initPromise = this._initializeWithRetry();
+
     try {
-      // Auto-detect and use recommended model
+      return await this._initPromise;
+    } finally {
+      this._initPromise = null;
+    }
+  }
+
+  async _initializeWithRetry() {
+    for (let attempt = 1; attempt <= MAX_INIT_RETRIES + 1; attempt++) {
+      const success = await this._tryInitialize(attempt);
+      if (success) return true;
+
+      if (attempt <= MAX_INIT_RETRIES) {
+        const delay = RETRY_DELAY_MS * attempt;
+        console.log(`[WebLLM] Retry ${attempt}/${MAX_INIT_RETRIES} in ${delay}ms...`);
+        this._updateStatus(
+          MODEL_STATUS.DOWNLOADING,
+          { progress: 0, status: `Retrying (${attempt}/${MAX_INIT_RETRIES})...` }
+        );
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+
+    console.error('[WebLLM] All initialization attempts failed');
+    return false;
+  }
+
+  async _tryInitialize(attempt) {
+    try {
       const modelId = await this.getRecommendedModel();
+      console.log(`[WebLLM] Init attempt ${attempt}, model: ${modelId}`);
 
-      this._updateStatus(MODEL_STATUS.DOWNLOADING, { progress: 0, status: 'Starting download...' });
+      this._updateStatus(MODEL_STATUS.DOWNLOADING, {
+        progress: 0,
+        status: attempt === 1 ? 'Preparing model...' : `Retrying (attempt ${attempt})...`
+      });
 
-      // Create engine with progress callback set BEFORE loading
+      // Clean up any existing engine before creating a new one
+      if (this.engine) {
+        try {
+          await this.engine.unload();
+        } catch {
+          // Ignore cleanup errors
+        }
+        this.engine = null;
+      }
+
       this.engine = new webllm.MLCEngine();
 
-      // Set progress callback before calling reload
       this.engine.setInitProgressCallback((report) => {
-        // WebLLM progress is 0-1, convert to 0-100
         const progressPercent = Math.round((report.progress || 0) * 100);
-        const statusText = report.text || 'Downloading...';
+        const statusText = report.text || 'Loading...';
+
+        console.log(`[WebLLM] Progress: ${progressPercent}% - ${statusText}`);
 
         if (report.progress < 1) {
           this._updateStatus(
@@ -120,13 +200,31 @@ class WebLLMService {
       await this.engine.reload(modelId);
 
       this._wasEverReady = true;
+      this.errorMessage = null;
       this._updateStatus(MODEL_STATUS.READY, { progress: 100, status: 'Model ready' });
+      console.log('[WebLLM] Model loaded successfully');
+
+      // Fire onReady callbacks
+      this._fireOnReadyCallbacks();
+
       return true;
     } catch (error) {
-      console.error('WebLLM initialization error:', error);
+      console.error(`[WebLLM] Init attempt ${attempt} failed:`, error);
+      console.error('[WebLLM] Error name:', error.name, 'message:', error.message);
+
+      // Clean up failed engine
+      if (this.engine) {
+        try {
+          await this.engine.unload();
+        } catch {
+          // Ignore
+        }
+        this.engine = null;
+      }
+
       this._updateStatus(
         MODEL_STATUS.ERROR,
-        { progress: 0, status: 'Failed to load model' },
+        { progress: 0, status: `Failed to load model (attempt ${attempt})` },
         error.message
       );
       return false;
@@ -165,7 +263,6 @@ class WebLLMService {
       systemPrompt = null
     } = options;
 
-    // Default system prompt for question generation
     const defaultSystemPrompt = `You generate grade 2-3 level quiz questions. Use small numbers only. Output valid JSON only.`;
 
     try {
@@ -240,6 +337,10 @@ export function unloadModel() {
 
 export function addProgressListener(callback) {
   return webLLMService.addProgressListener(callback);
+}
+
+export function onModelReady(callback) {
+  return webLLMService.onReady(callback);
 }
 
 export default webLLMService;

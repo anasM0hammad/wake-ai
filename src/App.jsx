@@ -87,6 +87,7 @@ import { isOnboardingComplete } from './services/storage/settingsStorage';
 import { initializeBackgroundService, cleanupBackgroundService } from './services/alarm/backgroundService';
 import { setupNotificationChannel, setOnAlarmTrigger, removeNotificationListeners } from './services/alarm/alarmScheduler';
 import { initializeQuestionPool } from './services/llm/questionPool';
+import { initializeModel, unloadModel } from './services/llm/webllm';
 import { initializeAds } from './services/ad';
 
 // Inner component that has access to navigation
@@ -105,6 +106,7 @@ function AppContent() {
     return () => {
       cleanupBackgroundService();
       removeNotificationListeners();
+      unloadModel().catch(() => {});
     };
   }, []);
 
@@ -167,8 +169,15 @@ function AppContent() {
           return;
         }
 
-        // Note: Preload check is handled by backgroundService.js
-        // to avoid duplicate calls on resume
+        // Reload model when app comes to foreground
+        initializeModel().catch(err => {
+          console.warn('Model reload on foreground failed:', err);
+        });
+      } else {
+        console.log('App went to background — unloading model to free memory');
+        unloadModel().catch(err => {
+          console.warn('Model unload on background failed:', err);
+        });
       }
     });
 

@@ -7,10 +7,10 @@
  * - Apps targeting Android 12+ face additional restrictions
  *
  * Our approach:
- * - Question preloading is a best-effort enhancement, not critical path
- * - The 30-minute preload window is intentionally generous
- * - Fallback questions ensure alarms ALWAYS work, even without preload
- * - Primary preloading happens when app is in foreground
+ * - Questions are mapped to alarms at creation time (synchronous from pool)
+ * - The question pool is pre-filled on app start (fallback + LLM when ready)
+ * - Model lifecycle (load/unload) is managed by App.jsx on foreground/background
+ * - Fallback questions ensure alarms ALWAYS work, even without LLM
  *
  * For production, consider:
  * - Using WorkManager for more reliable background tasks
@@ -19,13 +19,10 @@
  */
 
 import { App } from '@capacitor/app';
-import { checkAndPreloadQuestions } from '../llm/preloadManager';
 
-let foregroundCheckInterval = null;
 // Track listener handles for proper cleanup (avoid removing unrelated listeners)
 let appStateChangeListener = null;
 let appUrlOpenListener = null;
-const FOREGROUND_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
 /**
  * Initialize background services and listeners
@@ -34,12 +31,7 @@ export async function initializeBackgroundService() {
   // Set up app state listeners
   await setupAppStateListeners();
 
-  // Start foreground checking
-  startForegroundChecks();
-
-  // Initial check
-  await checkAndPreloadQuestions();
-
+  console.log('[BackgroundService] Initialized');
   return true;
 }
 
@@ -50,110 +42,28 @@ async function setupAppStateListeners() {
   // Listen for app state changes
   appStateChangeListener = await App.addListener('appStateChange', async ({ isActive }) => {
     if (isActive) {
-      // App came to foreground
-      console.log('App resumed - checking preload');
-      await onAppResume();
+      console.log('[BackgroundService] App resumed');
     } else {
-      // App went to background
-      console.log('App backgrounded');
-      onAppBackground();
+      console.log('[BackgroundService] App backgrounded');
     }
   });
 
   // Listen for app resume from URL (deep links, notifications)
   appUrlOpenListener = await App.addListener('appUrlOpen', async (event) => {
-    console.log('App opened via URL:', event.url);
-    await onAppResume();
+    console.log('[BackgroundService] App opened via URL:', event.url);
   });
 }
 
 /**
- * Called when app comes to foreground
- */
-async function onAppResume() {
-  // Resume foreground checks
-  startForegroundChecks();
-
-  // Immediate preload check
-  try {
-    const result = await checkAndPreloadQuestions();
-    console.log('Resume preload check:', result);
-  } catch (error) {
-    console.error('Resume preload check failed:', error);
-  }
-}
-
-/**
- * Called when app goes to background
- */
-function onAppBackground() {
-  // Stop foreground checks to save battery
-  stopForegroundChecks();
-}
-
-/**
- * Start periodic foreground checks
- */
-export function startForegroundChecks() {
-  if (foregroundCheckInterval) {
-    return; // Already running
-  }
-
-  foregroundCheckInterval = setInterval(async () => {
-    try {
-      const result = await checkAndPreloadQuestions();
-      if (!result.skipped) {
-        console.log('Periodic preload check:', result);
-      }
-    } catch (error) {
-      console.error('Periodic preload check failed:', error);
-    }
-  }, FOREGROUND_CHECK_INTERVAL_MS);
-
-  console.log('Started foreground preload checks');
-}
-
-/**
- * Stop periodic foreground checks
- */
-export function stopForegroundChecks() {
-  if (foregroundCheckInterval) {
-    clearInterval(foregroundCheckInterval);
-    foregroundCheckInterval = null;
-    console.log('Stopped foreground preload checks');
-  }
-}
-
-/**
- * Check if background service is active
- */
-export function isBackgroundServiceActive() {
-  return foregroundCheckInterval !== null;
-}
-
-/**
  * Register for background execution (best-effort)
- *
- * Note: This requires native plugin support and may not work on all devices.
- * The @capacitor/background-runner plugin requires Capacitor 5+ and has
- * significant limitations on Android.
- *
- * For reliable alarm functionality:
- * 1. Use native AlarmManager (requires native code)
- * 2. Use Foreground Service (requires native code)
- * 3. Rely on local notifications (current approach)
  */
 export async function registerBackgroundTask() {
-  // Background execution in web/hybrid apps is fundamentally limited
-  // The local notification system handles alarm scheduling
-  // Preloading is opportunistic and enhances UX but isn't required
-
-  console.log('Background task registration: Using foreground-only preloading');
+  console.log('Background task registration: Using foreground-only approach');
   console.log('Alarms use local notifications which work independently');
 
   return {
     registered: false,
-    reason: 'Using local notifications for alarms, foreground-only preloading',
+    reason: 'Using local notifications for alarms, foreground-only model loading',
     fallbackAvailable: true
   };
 }
@@ -163,9 +73,6 @@ export async function registerBackgroundTask() {
  * Only removes listeners registered by this service (not ALL app listeners)
  */
 export async function cleanupBackgroundService() {
-  stopForegroundChecks();
-
-  // Remove only the listeners we registered
   if (appStateChangeListener) {
     await appStateChangeListener.remove();
     appStateChangeListener = null;
@@ -178,9 +85,6 @@ export async function cleanupBackgroundService() {
 
 export default {
   initializeBackgroundService,
-  startForegroundChecks,
-  stopForegroundChecks,
-  isBackgroundServiceActive,
   registerBackgroundTask,
   cleanupBackgroundService
 };

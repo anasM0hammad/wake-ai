@@ -1,31 +1,31 @@
 /**
  * Question Pool Service
- * Manages pre-generation of questions in phases
- * Phase 1: 5 questions (covers Easy)
- * Phase 2: 7 questions (covers Medium)
- * Phase 3: 9 questions (covers Hard)
+ * Manages pre-generation of questions in phases.
+ *
+ * Pool is always populated — with LLM questions when the model is available,
+ * or with fallback questions otherwise.  Generation is triggered reactively
+ * via the onModelReady callback so it is fully decoupled from model loading.
  */
 
 import { generateQuestionSet } from './questionService';
 import { getRandomFallbackQuestions } from './fallbackQuestions';
-import { initializeModel, isModelReady, unloadModel } from './webllm';
+import { initializeModel, isModelReady, onModelReady } from './webllm';
 import { getSettings } from '../storage/settingsStorage';
 
 const POOL_STORAGE_KEY = 'wakeai_question_pool';
 
-// Phase targets
+// Phase targets — how many questions we want at each phase
 const PHASE_TARGETS = {
-  1: 5,  // Easy
-  2: 7,  // Medium
-  3: 9   // Hard
+  1: 5,  // covers Easy
+  2: 7,  // covers Medium
+  3: 9   // covers Hard
 };
 
 let isGenerating = false;
 let generationAborted = false;
 
-/**
- * Get stored question pool
- */
+// ─── Pool CRUD ───────────────────────────────────────────────
+
 export function getQuestionPool() {
   try {
     const raw = localStorage.getItem(POOL_STORAGE_KEY);
@@ -37,9 +37,6 @@ export function getQuestionPool() {
   }
 }
 
-/**
- * Save question pool
- */
 function saveQuestionPool(pool) {
   try {
     localStorage.setItem(POOL_STORAGE_KEY, JSON.stringify(pool));
@@ -50,39 +47,23 @@ function saveQuestionPool(pool) {
   }
 }
 
-/**
- * Clear question pool
- */
 export function clearQuestionPool() {
   localStorage.removeItem(POOL_STORAGE_KEY);
 }
 
-/**
- * Get current pool count
- */
 export function getPoolCount() {
   const pool = getQuestionPool();
   return pool?.questions?.length || 0;
 }
 
-/**
- * Check if pool has enough questions for difficulty
- */
 export function hasEnoughQuestions(difficulty) {
-  const required = {
-    'EASY': 5,
-    'MEDIUM': 7,
-    'HARD': 9
-  };
-  const count = getPoolCount();
-  return count >= (required[difficulty] || 5);
+  const required = { EASY: 5, MEDIUM: 7, HARD: 9 };
+  return getPoolCount() >= (required[difficulty] || 5);
 }
 
 /**
- * Get questions from pool for alarm
- * @param {number} count - Number of questions needed
- * @param {string[]} categories - Preferred categories
- * @returns {Object[]} Questions array
+ * Get questions from the pool for an alarm.
+ * Auto-supplements with fallback if pool is insufficient.
  */
 export function getQuestionsFromPool(count, categories) {
   const pool = getQuestionPool();
@@ -94,7 +75,6 @@ export function getQuestionsFromPool(count, categories) {
 
   let questions = [...pool.questions];
 
-  // If we have enough, return what we need
   if (questions.length >= count) {
     console.log('[QuestionPool] Using', count, 'questions from pool of', questions.length);
     return questions.slice(0, count);
@@ -107,24 +87,20 @@ export function getQuestionsFromPool(count, categories) {
   return [...questions, ...fallback];
 }
 
-/**
- * Add questions to pool (for incremental generation)
- */
 function addToPool(newQuestions, categories) {
   const pool = getQuestionPool() || { questions: [], categories: [], generatedAt: Date.now() };
-
-  // Add new questions
   pool.questions = [...pool.questions, ...newQuestions];
   pool.categories = categories;
   pool.generatedAt = Date.now();
-
   saveQuestionPool(pool);
   console.log('[QuestionPool] Pool now has', pool.questions.length, 'questions');
 }
 
+// ─── LLM question generation (phased) ───────────────────────
+
 /**
- * Generate questions in phases
- * Called after model is ready
+ * Generate questions in phases using the LLM.
+ * Called after model is ready — does NOT unload the model.
  */
 export async function generateQuestionsInPhases(categories) {
   if (isGenerating) {
@@ -139,18 +115,16 @@ export async function generateQuestionsInPhases(categories) {
   console.log('[QuestionPool] Starting phased generation. Current count:', currentCount);
 
   try {
-    // Determine which phase to start from
-    let phase = 1;
-    if (currentCount >= 5) phase = 2;
-    if (currentCount >= 7) phase = 3;
     if (currentCount >= 9) {
       console.log('[QuestionPool] Already have 9 questions, skipping generation');
-      isGenerating = false;
       return;
     }
 
-    // Generate for each remaining phase
-    for (let p = phase; p <= 3; p++) {
+    // Clear pool before LLM generation so we replace fallback with LLM questions
+    clearQuestionPool();
+    console.log('[QuestionPool] Cleared pool to replace with LLM questions');
+
+    for (let p = 1; p <= 3; p++) {
       if (generationAborted) {
         console.log('[QuestionPool] Generation aborted');
         break;
@@ -164,11 +138,9 @@ export async function generateQuestionsInPhases(categories) {
 
       console.log(`[QuestionPool] Phase ${p}: Generating ${needed} questions (target: ${target})`);
 
-      // Generate questions one at a time with verification
       const newQuestions = await generateQuestionSet('EASY', categories, needed);
 
       if (newQuestions && newQuestions.length > 0) {
-        // Filter out _source metadata
         const cleanQuestions = newQuestions.filter(q => typeof q === 'object' && q.question);
         addToPool(cleanQuestions, categories);
       }
@@ -180,98 +152,97 @@ export async function generateQuestionsInPhases(categories) {
     }
 
     console.log('[QuestionPool] Phased generation complete. Total:', getPoolCount());
-
   } catch (error) {
     console.error('[QuestionPool] Generation error:', error);
   } finally {
     isGenerating = false;
-    // Unload model to free memory
-    unloadModel().catch(e => console.warn('[QuestionPool] Unload error:', e));
+    // NOTE: Model is intentionally NOT unloaded here.
+    // Lifecycle is managed by App.jsx (foreground/background).
   }
 }
 
-/**
- * Abort ongoing generation
- */
 export function abortGeneration() {
   generationAborted = true;
 }
 
-/**
- * Check if generation is in progress
- */
 export function isGenerationInProgress() {
   return isGenerating;
 }
 
+// ─── Initialization ──────────────────────────────────────────
+
 /**
- * Start model loading and question generation
- * Called on app start
+ * Initialize the question pool.
+ *
+ * 1. Always pre-fill the pool with fallback questions if it's empty
+ *    so that alarms are never left without questions.
+ * 2. Start model loading (fire-and-forget).
+ * 3. When the model becomes ready, replace/supplement pool with
+ *    LLM-generated questions via onModelReady callback.
  */
 export async function initializeQuestionPool() {
   console.log('[QuestionPool] Initializing...');
 
   const settings = getSettings();
   const categories = settings.selectedCategories || ['math'];
-
-  // Check current pool status
   const currentCount = getPoolCount();
   console.log('[QuestionPool] Current pool count:', currentCount);
 
-  // If we already have 9 questions, no need to generate
-  if (currentCount >= 9) {
-    console.log('[QuestionPool] Pool is full, no generation needed');
-    return { status: 'ready', count: currentCount };
+  // Step 1: Ensure pool always has questions (fallback if needed)
+  if (currentCount < 9) {
+    const needed = 9 - currentCount;
+    console.log('[QuestionPool] Pre-filling pool with', needed, 'fallback questions');
+    const fallback = getRandomFallbackQuestions(categories, needed);
+    addToPool(fallback, categories);
   }
 
-  // Start model loading
-  console.log('[QuestionPool] Loading model...');
-  const modelReady = await initializeModel();
+  // Step 2: Register callback so LLM questions replace fallback when model is ready
+  onModelReady(() => {
+    console.log('[QuestionPool] Model ready — starting LLM question generation');
+    generateQuestionsInPhases(categories).catch(err => {
+      console.error('[QuestionPool] LLM generation after model ready failed:', err);
+    });
+  });
 
-  if (!modelReady) {
-    console.log('[QuestionPool] Model failed to load, will use fallback questions');
-    return { status: 'fallback', count: currentCount };
-  }
+  // Step 3: Kick off model loading (deduplicates if already loading)
+  console.log('[QuestionPool] Requesting model load...');
+  initializeModel().then(success => {
+    if (!success) {
+      console.log('[QuestionPool] Model failed to load — pool already has fallback questions');
+    }
+  }).catch(err => {
+    console.warn('[QuestionPool] Model init error:', err);
+  });
 
-  // Generate questions in phases
-  await generateQuestionsInPhases(categories);
-
-  return { status: 'ready', count: getPoolCount() };
+  return { status: 'initializing', count: getPoolCount() };
 }
 
 /**
- * Generate additional questions if difficulty increased
- * @param {number} additionalCount - How many more questions needed
+ * Generate additional questions if difficulty increased.
  */
 export async function generateAdditionalQuestions(additionalCount, categories) {
   if (additionalCount <= 0) return;
 
   console.log('[QuestionPool] Generating', additionalCount, 'additional questions');
 
-  // Check if model is ready, if not try to load
-  if (!isModelReady()) {
-    const loaded = await initializeModel();
-    if (!loaded) {
-      console.log('[QuestionPool] Model not available, using fallback');
-      const fallback = getRandomFallbackQuestions(categories, additionalCount);
-      addToPool(fallback, categories);
-      return;
+  // If model is ready, generate with LLM
+  if (isModelReady()) {
+    try {
+      const newQuestions = await generateQuestionSet('EASY', categories, additionalCount);
+      if (newQuestions && newQuestions.length > 0) {
+        const cleanQuestions = newQuestions.filter(q => typeof q === 'object' && q.question);
+        addToPool(cleanQuestions, categories);
+        return;
+      }
+    } catch (error) {
+      console.error('[QuestionPool] Additional generation failed:', error);
     }
   }
 
-  try {
-    const newQuestions = await generateQuestionSet('EASY', categories, additionalCount);
-    if (newQuestions && newQuestions.length > 0) {
-      const cleanQuestions = newQuestions.filter(q => typeof q === 'object' && q.question);
-      addToPool(cleanQuestions, categories);
-    }
-  } catch (error) {
-    console.error('[QuestionPool] Additional generation failed:', error);
-    const fallback = getRandomFallbackQuestions(categories, additionalCount);
-    addToPool(fallback, categories);
-  } finally {
-    unloadModel().catch(e => console.warn('[QuestionPool] Unload error:', e));
-  }
+  // Fallback — always works
+  console.log('[QuestionPool] Using fallback for additional questions');
+  const fallback = getRandomFallbackQuestions(categories, additionalCount);
+  addToPool(fallback, categories);
 }
 
 export default {

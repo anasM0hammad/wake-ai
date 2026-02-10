@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { getQuestionsForSession } from '../services/llm/preloadManager';
+import { getQuestionSet } from '../services/storage/questionStorage';
 import { getRandomFallbackQuestions } from '../services/llm/fallbackQuestions';
 import { DIFFICULTY, MAX_WRONG_ANSWERS } from '../utils/constants';
 
@@ -33,19 +33,45 @@ export function useQuestionSession() {
     const difficultyKey = sessionDifficulty?.toUpperCase() || 'EASY';
     setDifficulty(difficultyKey);
 
-    // Get questions from preload cache or fallback
-    let loadedQuestions;
+    // Get questions from per-alarm questionStorage (primary source)
+    let loadedQuestions = [];
     try {
-      loadedQuestions = getQuestionsForSession(difficultyKey, categories);
+      const storedSet = getQuestionSet();
+      if (storedSet && Array.isArray(storedSet.questions) && storedSet.questions.length > 0) {
+        loadedQuestions = storedSet.questions;
+        console.log('[QuestionSession] Loaded', loadedQuestions.length, 'questions from questionStorage, source:', storedSet.source);
+      }
     } catch (error) {
-      console.error('Failed to get preloaded questions:', error);
+      console.error('[QuestionSession] Failed to read questionStorage:', error);
+    }
+
+    // Validate loaded questions
+    loadedQuestions = loadedQuestions.filter(q =>
+      q &&
+      typeof q.question === 'string' &&
+      Array.isArray(q.options) &&
+      q.options.length === 4 &&
+      typeof q.correctIndex === 'number' &&
+      q.correctIndex >= 0 &&
+      q.correctIndex <= 3
+    );
+
+    // Supplement with fallback if not enough
+    const requiredCount = (DIFFICULTY[difficultyKey]?.questions || 1) + 5; // required + buffer
+    if (loadedQuestions.length < requiredCount) {
+      const needed = requiredCount - loadedQuestions.length;
+      console.log('[QuestionSession] Need', needed, 'more questions, supplementing with fallback');
+      const fallback = getRandomFallbackQuestions(categories, needed);
+      loadedQuestions = [...loadedQuestions, ...fallback];
+    }
+
+    // Final safety net
+    if (loadedQuestions.length === 0) {
       loadedQuestions = getRandomFallbackQuestions(categories, 10);
     }
 
-    // Ensure we have enough questions
-    if (!loadedQuestions || loadedQuestions.length === 0) {
-      loadedQuestions = getRandomFallbackQuestions(categories, 10);
-    }
+    // Shuffle to mix LLM and fallback questions
+    loadedQuestions = loadedQuestions.sort(() => Math.random() - 0.5);
 
     setQuestions(loadedQuestions);
     setCurrentIndex(0);
