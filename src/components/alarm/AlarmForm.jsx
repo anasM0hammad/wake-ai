@@ -17,7 +17,7 @@ export default function AlarmForm({
       id: alarm?.id,
       time,
       difficulty,
-      enabled: alarm?.enabled ?? true
+      enabled: true
     });
   };
 

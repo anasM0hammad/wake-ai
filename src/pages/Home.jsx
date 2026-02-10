@@ -5,6 +5,7 @@ import { useSettings } from '../hooks/useSettings';
 import { useLLM } from '../hooks/useLLM';
 import { useBannerAd } from '../hooks/useAds';
 import AlarmForm from '../components/alarm/AlarmForm';
+import { Button, Modal } from '../components/common';
 import { getNextAlarmDate, getTimeUntilAlarm, formatTimeDisplay } from '../utils/timeUtils';
 import { DIFFICULTY_MODES } from '../utils/constants';
 
@@ -18,6 +19,7 @@ export default function Home() {
   useBannerAd();
 
   const [showAlarmForm, setShowAlarmForm] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [timeUntil, setTimeUntil] = useState('');
 
   // Check onboarding status
@@ -58,9 +60,8 @@ export default function Home() {
   };
 
   const handleDeleteAlarm = async () => {
-    if (confirm('Delete this alarm?')) {
-      await deleteAlarm();
-    }
+    await deleteAlarm();
+    setShowDeleteModal(false);
   };
 
   const handleToggleAlarm = async () => {
@@ -209,7 +210,7 @@ export default function Home() {
                     Edit Alarm
                   </button>
                   <button
-                    onClick={handleDeleteAlarm}
+                    onClick={() => setShowDeleteModal(true)}
                     className="w-16 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] py-4 rounded-2xl font-medium transition-all flex items-center justify-center border border-[#EF4444]/20"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -269,6 +270,33 @@ export default function Home() {
           isOpen={showAlarmForm}
         />
       )}
+
+      {/* Delete Alarm Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Delete Alarm?"
+      >
+        <p className="text-[#636363] mb-6">
+          This will permanently delete your alarm. You can always create a new one.
+        </p>
+        <div className="flex gap-3">
+          <Button
+            variant="secondary"
+            className="flex-1"
+            onClick={() => setShowDeleteModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            className="flex-1"
+            onClick={handleDeleteAlarm}
+          >
+            Delete
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
