@@ -21,7 +21,7 @@ import {
   playAlarmWithVibration,
   stopAlarmWithVibration
 } from '../services/alarm/audioPlayer';
-import { isNativeAlarmAvailable, dismissNativeAlarm } from '../services/alarm/nativeAlarm';
+import { isNativeAlarmAvailable, isNativeRinging, dismissNativeAlarm } from '../services/alarm/nativeAlarm';
 import { recordWin, recordKill, recordFail } from '../services/storage/statsStorage';
 import { getSettings } from '../services/storage/settingsStorage';
 
@@ -90,9 +90,21 @@ export function useAlarm() {
     setActiveAlarmState(alarmToUse);
     setSession(newSession);
 
-    // On Android the native AlarmService already handles audio + vibration.
-    // Only play JS audio on web where there is no native service.
-    if (!isNativeAlarmAvailable()) {
+    // Check if the native AlarmService is ACTUALLY playing audio right now.
+    // If it is, skip JS audio (native handles STREAM_ALARM, vibration, etc.).
+    // If it is NOT (e.g. JS timer fired first, native failed, or we're on web),
+    // play JS audio as fallback so the user always hears something.
+    let nativeHandlingAudio = false;
+    if (isNativeAlarmAvailable()) {
+      try {
+        const result = await isNativeRinging();
+        nativeHandlingAudio = result.ringing;
+      } catch {
+        // Plugin call failed — assume native is not handling audio
+      }
+    }
+
+    if (!nativeHandlingAudio) {
       try {
         if (settings.vibrationEnabled) {
           await playAlarmWithVibration(settings.alarmTone);
