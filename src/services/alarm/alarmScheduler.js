@@ -91,21 +91,27 @@ export async function scheduleAlarm(alarm) {
     const settings = getSettings();
     const toneName = settings.alarmTone || 'gentle';
 
-    // On Android: use native AlarmManager for reliable delivery even when
-    // the app is killed or the device is in Doze mode.
+    // On Android: schedule native AlarmManager as the PRIMARY path.
+    // This is Doze-exempt, survives app kill, plays audio on STREAM_ALARM.
+    // Wrapped in its own try/catch so failure doesn't block the backup path.
     if (isNativeAlarmAvailable()) {
-      await scheduleNativeAlarm({
-        alarmId: alarm.id,
-        time: alarm.time,
-        tone: toneName,
-        vibration: settings.vibrationEnabled !== false,
-        triggerAt
-      });
-      console.log('[AlarmScheduler] Native alarm scheduled for', alarmDate.toLocaleString());
-      return true;
+      try {
+        await scheduleNativeAlarm({
+          alarmId: alarm.id,
+          time: alarm.time,
+          tone: toneName,
+          vibration: settings.vibrationEnabled !== false,
+          triggerAt
+        });
+        console.log('[AlarmScheduler] Native alarm scheduled for', alarmDate.toLocaleString());
+      } catch (nativeErr) {
+        console.error('[AlarmScheduler] Native alarm scheduling failed:', nativeErr);
+      }
     }
 
-    // On web: use LocalNotifications (best-effort, JS timer is the real fallback)
+    // ALWAYS schedule LocalNotifications as backup — even on Android.
+    // If native fires first the notification is harmless. If native fails,
+    // this + the JS timer (AlarmMonitor) are the safety net.
     const notificationId = hashStringToInt(alarm.id);
     const soundFile = `${toneName}.mp3`;
 
@@ -134,7 +140,7 @@ export async function scheduleAlarm(alarm) {
       ]
     });
 
-    console.log('[AlarmScheduler] Web notification scheduled for', alarmDate.toLocaleString());
+    console.log('[AlarmScheduler] Notification backup scheduled for', alarmDate.toLocaleString());
     return true;
   } catch (error) {
     console.error('Failed to schedule alarm:', error);
@@ -147,20 +153,23 @@ export async function cancelAlarm(alarmId) {
     return false;
   }
 
+  // Cancel each path independently — one failing must not block the other
   try {
-    // Cancel native alarm (no-op on web)
     await cancelNativeAlarm();
+  } catch (err) {
+    console.warn('Failed to cancel native alarm:', err);
+  }
 
-    // Also cancel LocalNotification (for web fallback or if previously scheduled)
+  try {
     const notificationId = hashStringToInt(alarmId);
     await LocalNotifications.cancel({
       notifications: [{ id: notificationId }]
     });
-    return true;
-  } catch (error) {
-    console.error('Failed to cancel alarm:', error);
-    return false;
+  } catch (err) {
+    console.warn('Failed to cancel notification:', err);
   }
+
+  return true;
 }
 
 export async function getScheduledAlarms() {
