@@ -89,10 +89,10 @@ public class MainActivity extends BridgeActivity {
 
         // If bridge is ready (warm start), fire event immediately to JS
         if (getBridge() != null) {
-            WakeAIAlarmPlugin plugin = getBridge().getPlugin("WakeAIAlarm");
-            if (plugin != null) {
+            com.getcapacitor.PluginHandle handle = getBridge().getPlugin("WakeAIAlarm");
+            if (handle != null && handle.getInstance() instanceof WakeAIAlarmPlugin) {
                 Log.i(TAG, "Bridge ready — firing alarm event to JS");
-                ((WakeAIAlarmPlugin) plugin).fireAlarmEvent();
+                ((WakeAIAlarmPlugin) handle.getInstance()).fireAlarmEvent();
             }
         }
         // For cold start, JS will call checkLaunchIntent() on init
