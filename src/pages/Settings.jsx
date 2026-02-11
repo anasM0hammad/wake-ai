@@ -47,11 +47,15 @@ export default function Settings() {
   };
 
   const clearData = async () => {
-    const cacheNames = await caches.keys();
-    for(const cache of cacheNames){
-      if(cache.includes('webllm')){
-        await caches.delete(cache);
+    try {
+      const cacheNames = await caches.keys();
+      for (const cache of cacheNames) {
+        if (cache.includes('webllm')) {
+          await caches.delete(cache);
+        }
       }
+    } catch (e) {
+      console.warn('[Settings] Cache API unavailable, skipping cache clear');
     }
 
     updateSettings({
@@ -162,8 +166,8 @@ export default function Settings() {
     setShowResetModal(false);
   };
 
-  const handleClearData = () => {
-    clearData();
+  const handleClearData = async () => {
+    await clearData();
     setShowClearModal(false);
   }
 
