@@ -8,6 +8,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -45,6 +46,9 @@ public class AlarmService extends Service {
     private MediaPlayer mediaPlayer;
     private Vibrator vibrator;
     private PowerManager.WakeLock wakeLock;
+    private AudioManager audioManager;
+    private AudioFocusRequest audioFocusRequest;
+    private int originalAlarmVolume = -1;
 
     @Override
     public void onCreate() {
@@ -137,6 +141,12 @@ public class AlarmService extends Service {
         stopAudio();
 
         try {
+            // Force alarm volume to MAX before anything else
+            forceAlarmVolumeMax();
+
+            // Request audio focus to suppress other audio sources
+            requestAudioFocus();
+
             // Map tone name to raw resource ID
             int rawId = getToneResourceId(tone);
 
@@ -153,9 +163,6 @@ public class AlarmService extends Service {
             Uri uri = Uri.parse("android.resource://" + getPackageName() + "/" + rawId);
             mediaPlayer.setDataSource(this, uri);
             mediaPlayer.setLooping(true);
-
-            // Ensure alarm volume is audible
-            ensureAlarmVolume();
 
             mediaPlayer.prepare();
             mediaPlayer.start();
@@ -182,6 +189,12 @@ public class AlarmService extends Service {
             }
             mediaPlayer = null;
         }
+
+        // Restore original alarm volume
+        restoreAlarmVolume();
+
+        // Release audio focus
+        releaseAudioFocus();
     }
 
     private int getToneResourceId(String tone) {
@@ -197,21 +210,86 @@ public class AlarmService extends Service {
     }
 
     /**
-     * Make sure alarm stream volume is at least 70% so the alarm is audible.
+     * Force STREAM_ALARM volume to MAX. Save original so we can restore after.
+     * STREAM_ALARM is independent of media/ring volume and is NOT affected by
+     * silent/vibrate mode — exactly what alarm apps need.
      */
-    private void ensureAlarmVolume() {
+    private void forceAlarmVolumeMax() {
         try {
-            AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-            if (am != null) {
-                int max = am.getStreamMaxVolume(AudioManager.STREAM_ALARM);
-                int current = am.getStreamVolume(AudioManager.STREAM_ALARM);
-                int threshold = (int) (max * 0.7);
-                if (current < threshold) {
-                    am.setStreamVolume(AudioManager.STREAM_ALARM, threshold, 0);
-                }
+            audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            if (audioManager != null) {
+                int max = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM);
+                originalAlarmVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM);
+                audioManager.setStreamVolume(AudioManager.STREAM_ALARM, max, 0);
+                Log.i(TAG, "Alarm volume forced to MAX (" + max + "), was " + originalAlarmVolume);
             }
         } catch (Exception e) {
-            Log.w(TAG, "Could not adjust alarm volume", e);
+            Log.w(TAG, "Could not force alarm volume to max", e);
+        }
+    }
+
+    /**
+     * Restore STREAM_ALARM volume to what it was before we forced it to MAX.
+     */
+    private void restoreAlarmVolume() {
+        if (audioManager != null && originalAlarmVolume >= 0) {
+            try {
+                audioManager.setStreamVolume(AudioManager.STREAM_ALARM, originalAlarmVolume, 0);
+                Log.i(TAG, "Alarm volume restored to " + originalAlarmVolume);
+            } catch (Exception e) {
+                Log.w(TAG, "Could not restore alarm volume", e);
+            }
+            originalAlarmVolume = -1;
+        }
+    }
+
+    /**
+     * Request exclusive transient audio focus so other apps (music, podcasts, etc.)
+     * are silenced while the alarm rings.
+     */
+    private void requestAudioFocus() {
+        try {
+            if (audioManager == null) {
+                audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            }
+            if (audioManager == null) return;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                AudioAttributes attrs = new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build();
+                audioFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
+                        .setAudioAttributes(attrs)
+                        .build();
+                audioManager.requestAudioFocus(audioFocusRequest);
+            } else {
+                audioManager.requestAudioFocus(null,
+                        AudioManager.STREAM_ALARM,
+                        AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE);
+            }
+            Log.i(TAG, "Audio focus acquired (GAIN_TRANSIENT_EXCLUSIVE)");
+        } catch (Exception e) {
+            Log.w(TAG, "Could not request audio focus", e);
+        }
+    }
+
+    /**
+     * Release audio focus so other apps can resume playback.
+     */
+    private void releaseAudioFocus() {
+        try {
+            if (audioManager != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && audioFocusRequest != null) {
+                    audioManager.abandonAudioFocusRequest(audioFocusRequest);
+                    audioFocusRequest = null;
+                } else {
+                    audioManager.abandonAudioFocus(null);
+                }
+                Log.i(TAG, "Audio focus released");
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Could not release audio focus", e);
         }
     }
 

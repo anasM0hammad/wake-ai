@@ -19,18 +19,22 @@ public class AlarmReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Log.i(TAG, "Alarm received — starting AlarmService");
 
-        Intent serviceIntent = new Intent(context, AlarmService.class);
-        serviceIntent.setAction(AlarmService.ACTION_START_ALARM);
+        try {
+            Intent serviceIntent = new Intent(context, AlarmService.class);
+            serviceIntent.setAction(AlarmService.ACTION_START_ALARM);
 
-        // Pass alarm data through to the service
-        if (intent.getExtras() != null) {
-            serviceIntent.putExtras(intent.getExtras());
-        }
+            // Pass alarm data through to the service
+            if (intent.getExtras() != null) {
+                serviceIntent.putExtras(intent.getExtras());
+            }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent);
-        } else {
-            context.startService(serviceIntent);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent);
+            } else {
+                context.startService(serviceIntent);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to start AlarmService", e);
         }
     }
 }
