@@ -67,8 +67,11 @@ public class BootReceiver extends BroadcastReceiver {
         PendingIntent alarmPI = PendingIntent.getBroadcast(
                 context, 0, receiverIntent, piFlags);
 
-        // Show-intent: opens the app when user taps the alarm icon in status bar
+        // Show-intent: opens the app when user taps the alarm icon in status bar.
+        // Must include ALARM_FIRED action so MainActivity.handleAlarmIntent()
+        // properly sets the flag and notifies JS to navigate to the ringing screen.
         Intent showIntent = new Intent(context, MainActivity.class);
+        showIntent.setAction("com.wakeai.app.ALARM_FIRED");
         showIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         PendingIntent showPI = PendingIntent.getActivity(
                 context, 1, showIntent, piFlags);
