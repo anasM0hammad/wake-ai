@@ -117,9 +117,24 @@ function AppContent() {
   const initializeApp = async () => {
     console.log('Initializing WakeAI app...');
 
-    // Start model loading FIRST — fire-and-forget so it runs in parallel
-    // with other init steps. Model loading is the slowest operation and
-    // should not wait behind ads, notifications, or background service init.
+    // ── CRITICAL: Alarm detection FIRST ──────────────────────────────
+    // These must run before anything else so the user sees the ringing
+    // screen immediately on cold/warm start, not the home page.
+
+    // 1. Register native alarm listener (warm-start events from MainActivity)
+    setupNativeAlarmListener();
+
+    // 2. Check if launched by alarm full-screen intent (cold start).
+    //    MUST be awaited — without await, the home page renders first and
+    //    the navigation to /alarm-ringing happens too late or not at all.
+    await checkNativeAlarmLaunch();
+
+    // 3. Set up LocalNotification trigger callback
+    setupNotificationListeners();
+
+    // ── Remaining init (non-alarm-critical) ──────────────────────────
+
+    // Start model loading — fire-and-forget so it runs in parallel
     console.log('Starting model load...');
     initializeModel().catch(err => {
       console.warn('Model load failed:', err);
@@ -131,12 +146,6 @@ function AppContent() {
     // Set up notification channel for alarms
     await setupNotificationChannel();
 
-    // Set up notification listeners (LocalNotifications — web fallback)
-    setupNotificationListeners();
-
-    // Set up native alarm event listener (Android)
-    setupNativeAlarmListener();
-
     // Set up app lifecycle listeners
     setupAppLifecycleListeners();
 
@@ -144,14 +153,10 @@ function AppContent() {
     await initializeBackgroundService();
 
     // Initialize question pool (loads model and generates questions in phases)
-    // Always attempt - the pool service handles fallback gracefully if model fails
     console.log('Starting question pool initialization...');
     initializeQuestionPool().catch(err => {
       console.warn('Failed to initialize question pool:', err);
     });
-
-    // Check if app was launched by a native alarm (cold start)
-    checkNativeAlarmLaunch();
 
     console.log('WakeAI app initialized');
   };

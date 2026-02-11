@@ -45,7 +45,8 @@ public class AlarmService extends Service {
 
     private MediaPlayer mediaPlayer;
     private Vibrator vibrator;
-    private PowerManager.WakeLock wakeLock;
+    private PowerManager.WakeLock cpuWakeLock;
+    private PowerManager.WakeLock screenWakeLock;
     private AudioManager audioManager;
     private AudioFocusRequest audioFocusRequest;
     private int originalAlarmVolume = -1;
@@ -59,6 +60,15 @@ public class AlarmService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent == null) {
+            // Service was killed by the system and restarted (START_STICKY).
+            // Resume the alarm if we have persisted alarm data — don't silently die.
+            AlarmStorage storage = new AlarmStorage(this);
+            if (storage.hasAlarm()) {
+                Log.i(TAG, "Service restarted with null intent — resuming alarm from storage");
+                startAlarm();
+                return START_STICKY;
+            }
+            Log.i(TAG, "Service restarted with null intent but no alarm data — stopping");
             stopSelf();
             return START_NOT_STICKY;
         }
@@ -68,6 +78,14 @@ public class AlarmService extends Service {
             Log.i(TAG, "Stopping alarm service");
             stopAlarm();
             return START_NOT_STICKY;
+        }
+
+        // Guard against duplicate starts (AlarmReceiver + JS ring() can both fire).
+        // If already ringing, the service is already showing notification + playing audio.
+        // A second startForeground() with the same notification is a safe no-op.
+        if (isRinging) {
+            Log.i(TAG, "Already ringing — ignoring duplicate START_ALARM");
+            return START_STICKY;
         }
 
         // Default: start the alarm
@@ -334,28 +352,49 @@ public class AlarmService extends Service {
 
     // ── Wake lock ───────────────────────────────────────────────────────
 
+    @SuppressWarnings("deprecation")
     private void acquireWakeLock() {
         releaseWakeLock();
 
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (pm != null) {
-            wakeLock = pm.newWakeLock(
+            // 1. Screen wake lock — turns the screen ON.
+            //    CRITICAL: Without this the full-screen intent has nothing to display on.
+            //    SCREEN_BRIGHT_WAKE_LOCK is deprecated but ACQUIRE_CAUSES_WAKEUP only
+            //    works with screen-level wake locks, and this is what stock alarm apps use.
+            screenWakeLock = pm.newWakeLock(
+                    PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP,
+                    "WakeAI::AlarmScreenWake"
+            );
+            screenWakeLock.acquire(60 * 1000L); // 1 minute — activity takes over after that
+
+            // 2. CPU wake lock — keeps CPU running for the alarm duration
+            cpuWakeLock = pm.newWakeLock(
                     PowerManager.PARTIAL_WAKE_LOCK,
                     "WakeAI::AlarmServiceWakeLock"
             );
-            // Auto-release after 20 minutes (matches MAX_RING_DURATION_MS)
-            wakeLock.acquire(20 * 60 * 1000L);
+            cpuWakeLock.acquire(20 * 60 * 1000L); // 20 minutes
+
+            Log.i(TAG, "Wake locks acquired (screen + CPU)");
         }
     }
 
     private void releaseWakeLock() {
-        if (wakeLock != null && wakeLock.isHeld()) {
+        if (screenWakeLock != null && screenWakeLock.isHeld()) {
             try {
-                wakeLock.release();
+                screenWakeLock.release();
             } catch (Exception e) {
-                Log.e(TAG, "Error releasing wake lock", e);
+                Log.e(TAG, "Error releasing screen wake lock", e);
             }
-            wakeLock = null;
+            screenWakeLock = null;
+        }
+        if (cpuWakeLock != null && cpuWakeLock.isHeld()) {
+            try {
+                cpuWakeLock.release();
+            } catch (Exception e) {
+                Log.e(TAG, "Error releasing CPU wake lock", e);
+            }
+            cpuWakeLock = null;
         }
     }
 
