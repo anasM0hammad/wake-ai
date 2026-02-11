@@ -37,6 +37,21 @@ export async function cancelNativeAlarm() {
 }
 
 /**
+ * Directly start the native AlarmService from JS.
+ * This ensures alarm plays on STREAM_ALARM at MAX volume, shows the
+ * full-screen notification over lock screen, and vibrates — regardless
+ * of which trigger path (JS timer, LocalNotification, or AlarmManager) fired.
+ *
+ * Call this from useAlarm.startAlarm() so native audio always handles playback
+ * on Android instead of JS Howler.js/Web Audio (which uses STREAM_MUSIC).
+ */
+export async function startNativeRinging() {
+  if (!isNativeAlarmAvailable()) return;
+  await WakeAIAlarm.ring();
+  console.log('[NativeAlarm] Native ringing started via ring()');
+}
+
+/**
  * Dismiss (stop) the currently ringing native alarm.
  * Stops audio, vibration, and the foreground service.
  */

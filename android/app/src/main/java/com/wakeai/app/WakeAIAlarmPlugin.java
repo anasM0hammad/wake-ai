@@ -107,6 +107,35 @@ public class WakeAIAlarmPlugin extends Plugin {
     }
 
     /**
+     * Directly start the native AlarmService from JS.
+     * Used when a JS-side trigger (timer, notification) fires the alarm —
+     * this ensures the alarm plays on STREAM_ALARM at MAX volume, shows
+     * the full-screen notification over the lock screen, and vibrates,
+     * regardless of which trigger path detected the alarm time.
+     */
+    @PluginMethod()
+    public void ring(PluginCall call) {
+        Context ctx = getContext();
+
+        try {
+            Intent serviceIntent = new Intent(ctx, AlarmService.class);
+            serviceIntent.setAction(AlarmService.ACTION_START_ALARM);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ctx.startForegroundService(serviceIntent);
+            } else {
+                ctx.startService(serviceIntent);
+            }
+
+            Log.i(TAG, "Native AlarmService started via ring()");
+            call.resolve();
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to start AlarmService via ring()", e);
+            call.reject("Failed to start native alarm service: " + e.getMessage());
+        }
+    }
+
+    /**
      * Check if the native alarm service is currently ringing.
      */
     @PluginMethod()

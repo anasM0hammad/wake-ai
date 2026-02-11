@@ -21,7 +21,7 @@ import {
   playAlarmWithVibration,
   stopAlarmWithVibration
 } from '../services/alarm/audioPlayer';
-import { isNativeAlarmAvailable, isNativeRinging, dismissNativeAlarm } from '../services/alarm/nativeAlarm';
+import { isNativeAlarmAvailable, startNativeRinging, isNativeRinging, dismissNativeAlarm } from '../services/alarm/nativeAlarm';
 import { recordWin, recordKill, recordFail } from '../services/storage/statsStorage';
 import { getSettings } from '../services/storage/settingsStorage';
 
@@ -90,17 +90,29 @@ export function useAlarm() {
     setActiveAlarmState(alarmToUse);
     setSession(newSession);
 
-    // Check if the native AlarmService is ACTUALLY playing audio right now.
-    // If it is, skip JS audio (native handles STREAM_ALARM, vibration, etc.).
-    // If it is NOT (e.g. JS timer fired first, native failed, or we're on web),
-    // play JS audio as fallback so the user always hears something.
+    // On Android: ALWAYS start the native AlarmService from JS.
+    // This ensures STREAM_ALARM audio at MAX volume, full-screen intent over
+    // lock screen, and vibration — regardless of which trigger path fired.
+    // The native service may already be running (if AlarmManager fired it first);
+    // startForegroundService with the same intent is a safe no-op in that case.
+    //
+    // JS audio (Howler.js / Web Audio on STREAM_MUSIC) is ONLY used on web
+    // or as a last-resort fallback if native start fails.
     let nativeHandlingAudio = false;
     if (isNativeAlarmAvailable()) {
       try {
-        const result = await isNativeRinging();
-        nativeHandlingAudio = result.ringing;
-      } catch {
-        // Plugin call failed — assume native is not handling audio
+        // First check if native is already ringing (AlarmManager path fired first)
+        const ringingResult = await isNativeRinging();
+        if (ringingResult.ringing) {
+          nativeHandlingAudio = true;
+        } else {
+          // Native not ringing yet — start it directly from JS
+          await startNativeRinging();
+          nativeHandlingAudio = true;
+        }
+      } catch (err) {
+        console.error('Failed to start native ringing:', err);
+        // Fall through to JS audio as backup
       }
     }
 
