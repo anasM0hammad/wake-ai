@@ -11,6 +11,8 @@ import { generateQuestionSet } from './questionService';
 import { getRandomFallbackQuestions } from './fallbackQuestions';
 import { initializeModel, isModelReady, onModelReady } from './webllm';
 import { getSettings } from '../storage/settingsStorage';
+import { getAlarm } from '../storage/alarmStorage';
+import { saveQuestionSet, deleteQuestionSet, getRequiredQuestionCount } from '../storage/questionStorage';
 
 const POOL_STORAGE_KEY = 'wakeai_question_pool';
 
@@ -96,6 +98,34 @@ function addToPool(newQuestions, categories) {
   console.log('[QuestionPool] Pool now has', pool.questions.length, 'questions');
 }
 
+/**
+ * Refresh the questionStorage for the active alarm with current pool contents.
+ * Avoids circular dependency with alarmManager by inlining the save logic.
+ */
+function refreshAlarmQuestions(categories) {
+  const alarm = getAlarm();
+  if (!alarm || !alarm.enabled) return;
+
+  const settings = getSettings();
+  const difficulty = alarm.difficulty || settings.difficulty || 'EASY';
+  const count = getRequiredQuestionCount(difficulty);
+  const questions = getQuestionsFromPool(count, categories);
+
+  if (questions.length === 0) return;
+
+  deleteQuestionSet();
+  saveQuestionSet({
+    alarmId: alarm.id,
+    difficulty,
+    categories,
+    questions,
+    generatedAt: Date.now(),
+    source: 'pool'
+  });
+
+  console.log('[QuestionPool] Refreshed alarm questions with LLM-generated pool:', questions.length);
+}
+
 // ─── LLM question generation (phased) ───────────────────────
 
 /**
@@ -115,12 +145,8 @@ export async function generateQuestionsInPhases(categories) {
   console.log('[QuestionPool] Starting phased generation. Current count:', currentCount);
 
   try {
-    if (currentCount >= 9) {
-      console.log('[QuestionPool] Already have 9 questions, skipping generation');
-      return;
-    }
-
-    // Clear pool before LLM generation so we replace fallback with LLM questions
+    // Always clear and regenerate — the pool may contain fallback questions
+    // that should be replaced with LLM-generated ones.
     clearQuestionPool();
     console.log('[QuestionPool] Cleared pool to replace with LLM questions');
 
@@ -152,6 +178,10 @@ export async function generateQuestionsInPhases(categories) {
     }
 
     console.log('[QuestionPool] Phased generation complete. Total:', getPoolCount());
+
+    // Refresh questionStorage for the active alarm so it uses LLM questions
+    // instead of the fallback questions that were saved at alarm creation time.
+    refreshAlarmQuestions(categories);
   } catch (error) {
     console.error('[QuestionPool] Generation error:', error);
   } finally {
