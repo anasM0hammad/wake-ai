@@ -3,6 +3,14 @@ import { AD_CONFIG } from '../../config/adConfig';
 let admobModule = null;
 let admobExports = null;
 
+// Initialization gate — all ad operations await this before proceeding.
+// Prevents the race where child components call showBanner() before
+// App-level initializeAds() has finished (React runs children effects first).
+let _initResolve;
+const _initReady = new Promise((resolve) => {
+  _initResolve = resolve;
+});
+
 /**
  * Lazily load the AdMob plugin. Returns null when running in a browser
  * (where Capacitor native plugins are unavailable).
@@ -20,13 +28,25 @@ async function getAdMob() {
 }
 
 /**
+ * Wait for SDK initialization before performing any ad operation.
+ * Returns the AdMob plugin instance, or null on web.
+ */
+async function getReadyAdMob() {
+  await _initReady;
+  return getAdMob();
+}
+
+/**
  * Initialize AdMob SDK and handle UMP consent flow.
  * Call once at app startup before showing any ads.
  */
 export async function initializeAds() {
   try {
     const AdMob = await getAdMob();
-    if (!AdMob) return;
+    if (!AdMob) {
+      _initResolve();
+      return;
+    }
 
     await AdMob.initialize({
       initializeForTesting: AD_CONFIG.IS_TESTING,
@@ -50,6 +70,9 @@ export async function initializeAds() {
     }
   } catch (e) {
     console.warn('[AdService] AdMob init failed (expected on web):', e.message);
+  } finally {
+    // Always unblock waiting ad operations, even if init failed
+    _initResolve();
   }
 }
 
@@ -58,7 +81,7 @@ export async function initializeAds() {
  */
 export async function showBanner() {
   try {
-    const AdMob = await getAdMob();
+    const AdMob = await getReadyAdMob();
     if (!AdMob) return;
 
     const { BannerAdSize, BannerAdPosition, BannerAdPluginEvents } =
@@ -89,7 +112,7 @@ export async function showBanner() {
  */
 export async function hideBanner() {
   try {
-    const AdMob = await getAdMob();
+    const AdMob = await getReadyAdMob();
     if (!AdMob) return;
     await AdMob.hideBanner();
   } catch (e) {
@@ -102,7 +125,7 @@ export async function hideBanner() {
  */
 export async function removeBanner() {
   try {
-    const AdMob = await getAdMob();
+    const AdMob = await getReadyAdMob();
     if (!AdMob) return;
     await AdMob.removeBanner();
   } catch (e) {
@@ -115,7 +138,7 @@ export async function removeBanner() {
  */
 export async function prepareInterstitial() {
   try {
-    const AdMob = await getAdMob();
+    const AdMob = await getReadyAdMob();
     if (!AdMob) return;
 
     await AdMob.prepareInterstitial({
@@ -133,7 +156,7 @@ export async function prepareInterstitial() {
  */
 export async function showInterstitial() {
   try {
-    const AdMob = await getAdMob();
+    const AdMob = await getReadyAdMob();
     if (!AdMob) return;
     await AdMob.showInterstitial();
     console.log('[AdService] Interstitial shown');
@@ -147,7 +170,7 @@ export async function showInterstitial() {
  */
 export async function prepareRewarded() {
   try {
-    const AdMob = await getAdMob();
+    const AdMob = await getReadyAdMob();
     if (!AdMob) return;
 
     await AdMob.prepareRewardVideoAd({
@@ -166,7 +189,7 @@ export async function prepareRewarded() {
  */
 export async function showRewarded() {
   try {
-    const AdMob = await getAdMob();
+    const AdMob = await getReadyAdMob();
     if (!AdMob) return false;
 
     const result = await AdMob.showRewardVideoAd();
@@ -184,7 +207,7 @@ export async function showRewarded() {
  */
 export async function addRewardedListener(callback) {
   try {
-    const AdMob = await getAdMob();
+    const AdMob = await getReadyAdMob();
     if (!AdMob) return () => {};
 
     const { RewardAdPluginEvents } = await import('@capacitor-community/admob');
