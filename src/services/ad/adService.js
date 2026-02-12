@@ -1,128 +1,59 @@
+import {
+  AdMob,
+  BannerAdSize,
+  BannerAdPosition,
+  BannerAdPluginEvents,
+  RewardAdPluginEvents,
+  AdmobConsentStatus,
+} from '@capacitor-community/admob';
+import { Capacitor } from '@capacitor/core';
 import { AD_CONFIG } from '../../config/adConfig';
 
-let admobModule = null;
-let admobExports = null;
-
-// Initialization gate — resolved immediately after AdMob.initialize()
-// so that ad operations don't fire before the native SDK + BannerExecutor
-// are ready. This MUST NOT wait on the consent flow because
-// requestConsentInfo() makes a network call to Google's UMP servers that
-// can hang or take 30+ seconds — blocking the gate on it would starve
-// every ad operation.
-let _initResolve;
-const _initReady = new Promise((resolve) => {
-  _initResolve = resolve;
-});
-
-/**
- * Lazily load the AdMob plugin. Returns null when running in a browser
- * (where Capacitor native plugins are unavailable).
- */
-async function getAdMob() {
-  if (admobModule) return admobModule;
-  try {
-    const mod = await import('@capacitor-community/admob');
-    admobModule = mod.AdMob;
-    admobExports = mod;
-    return admobModule;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Wait for SDK initialization before performing any ad operation.
- * Returns the AdMob plugin instance, or null on web.
- */
-async function getReadyAdMob() {
-  await _initReady;
-  return getAdMob();
-}
-
-/**
- * Run UMP consent flow in background (non-blocking).
- * Not required for test ads but needed for real ads in production.
- */
-async function runConsentFlow(AdMob) {
-  try {
-    const consentInfo = await AdMob.requestConsentInfo();
-    console.log('[AdService] Consent status:', consentInfo.status);
-
-    if (
-      consentInfo.isConsentFormAvailable &&
-      consentInfo.status === admobExports.AdmobConsentStatus.REQUIRED
-    ) {
-      const result = await AdMob.showConsentForm();
-      console.log('[AdService] Consent form result:', result.status);
-    }
-  } catch (e) {
-    console.warn('[AdService] Consent flow failed (non-blocking):', e.message);
-  }
-}
+let initialized = false;
 
 /**
  * Initialize AdMob SDK. Call once at app startup.
- *
- * Flow:
- *   1. Check native platform (bail on web)
- *   2. AdMob.initialize()  — inits SDK + BannerExecutor view hierarchy
- *   3. Open the init gate   — ad operations can now proceed
- *   4. Consent flow          — fire-and-forget, does NOT block ads
  */
 export async function initializeAds() {
+  if (!Capacitor.isNativePlatform()) return;
+
   try {
-    const { Capacitor } = await import('@capacitor/core');
-    if (!Capacitor.isNativePlatform()) {
-      console.log('[AdService] Web platform — ads disabled');
-      _initResolve();
-      return;
-    }
-
-    const AdMob = await getAdMob();
-    if (!AdMob) {
-      console.warn('[AdService] AdMob plugin not available');
-      _initResolve();
-      return;
-    }
-
     await AdMob.initialize({
       initializeForTesting: AD_CONFIG.IS_TESTING,
     });
-    console.log('[AdService] AdMob SDK initialized');
+    initialized = true;
+    console.log('[AdService] AdMob initialized');
 
-    // Open the gate — SDK and BannerExecutor are ready, ads can load.
-    _initResolve();
-
-    // Consent runs in background — must not block ad operations.
-    runConsentFlow(AdMob);
+    // Non-blocking consent flow
+    AdMob.requestConsentInfo().then((info) => {
+      console.log('[AdService] Consent:', info.status);
+      if (info.isConsentFormAvailable && info.status === AdmobConsentStatus.REQUIRED) {
+        AdMob.showConsentForm();
+      }
+    }).catch(() => {});
   } catch (e) {
-    console.warn('[AdService] AdMob init failed:', e.message);
-    _initResolve();
+    console.warn('[AdService] init failed:', e);
   }
 }
 
 /**
  * Show a banner ad at the bottom of the screen.
- *
- * Note: isTesting is intentionally omitted. We pass Google's official test
- * ad unit IDs directly — the SDK always returns test creatives for those IDs
- * regardless of the isTesting flag. Omitting the flag also avoids the
- * AdViewIdHelper code path that overrides adId when the device is not in
- * the testingDevices list.
  */
 export async function showBanner() {
+  if (!Capacitor.isNativePlatform()) return;
+
+  // Wait briefly for init if not ready yet
+  if (!initialized) {
+    await new Promise((r) => setTimeout(r, 2000));
+    if (!initialized) return;
+  }
+
   try {
-    const AdMob = await getReadyAdMob();
-    if (!AdMob) return;
-
-    const { BannerAdSize, BannerAdPosition, BannerAdPluginEvents } =
-      await import('@capacitor-community/admob');
-
     AdMob.addListener(BannerAdPluginEvents.Loaded, () => {
-      console.log('[AdService] Banner ad loaded');
+      console.log('[AdService] Banner loaded');
     });
-    AdMob.addListener(BannerAdPluginEvents.FailedToLoad, (error) => {
-      console.error('[AdService] Banner FailedToLoad:', error.message, error.code);
+    AdMob.addListener(BannerAdPluginEvents.FailedToLoad, (err) => {
+      console.error('[AdService] Banner failed:', err);
     });
 
     await AdMob.showBanner({
@@ -131,126 +62,66 @@ export async function showBanner() {
       position: BannerAdPosition.BOTTOM_CENTER,
       margin: 0,
     });
-    console.log('[AdService] Banner requested');
   } catch (e) {
-    console.warn('[AdService] Banner failed:', e.message);
+    console.warn('[AdService] showBanner error:', e);
   }
 }
 
-/**
- * Hide the currently visible banner ad.
- */
 export async function hideBanner() {
-  try {
-    const AdMob = await getReadyAdMob();
-    if (!AdMob) return;
-    await AdMob.hideBanner();
-  } catch (e) {
-    console.warn('[AdService] Hide banner failed:', e.message);
-  }
+  if (!Capacitor.isNativePlatform()) return;
+  try { await AdMob.hideBanner(); } catch {}
 }
 
-/**
- * Remove the banner ad completely (frees resources).
- */
 export async function removeBanner() {
-  try {
-    const AdMob = await getReadyAdMob();
-    if (!AdMob) return;
-    await AdMob.removeBanner();
-  } catch (e) {
-    console.warn('[AdService] Remove banner failed:', e.message);
-  }
+  if (!Capacitor.isNativePlatform()) return;
+  try { await AdMob.removeBanner(); } catch {}
 }
 
-/**
- * Prepare an interstitial ad (pre-load for instant display).
- */
 export async function prepareInterstitial() {
+  if (!Capacitor.isNativePlatform() || !initialized) return;
   try {
-    const AdMob = await getReadyAdMob();
-    if (!AdMob) return;
-
-    await AdMob.prepareInterstitial({
-      adId: AD_CONFIG.INTERSTITIAL_ID,
-    });
-    console.log('[AdService] Interstitial prepared');
+    await AdMob.prepareInterstitial({ adId: AD_CONFIG.INTERSTITIAL_ID });
   } catch (e) {
-    console.warn('[AdService] Interstitial prep failed:', e.message);
+    console.warn('[AdService] prepareInterstitial error:', e);
   }
 }
 
-/**
- * Show the pre-loaded interstitial ad.
- */
 export async function showInterstitial() {
-  try {
-    const AdMob = await getReadyAdMob();
-    if (!AdMob) return;
-    await AdMob.showInterstitial();
-    console.log('[AdService] Interstitial shown');
-  } catch (e) {
-    console.warn('[AdService] Interstitial show failed:', e.message);
+  if (!Capacitor.isNativePlatform()) return;
+  try { await AdMob.showInterstitial(); } catch (e) {
+    console.warn('[AdService] showInterstitial error:', e);
   }
 }
 
-/**
- * Prepare a rewarded video ad (pre-load for instant display).
- */
 export async function prepareRewarded() {
+  if (!Capacitor.isNativePlatform() || !initialized) return;
   try {
-    const AdMob = await getReadyAdMob();
-    if (!AdMob) return;
-
-    await AdMob.prepareRewardVideoAd({
-      adId: AD_CONFIG.REWARDED_ID,
-    });
-    console.log('[AdService] Rewarded ad prepared');
+    await AdMob.prepareRewardVideoAd({ adId: AD_CONFIG.REWARDED_ID });
   } catch (e) {
-    console.warn('[AdService] Rewarded prep failed:', e.message);
+    console.warn('[AdService] prepareRewarded error:', e);
   }
 }
 
-/**
- * Show the pre-loaded rewarded video ad.
- * Returns true if the reward was earned, false otherwise.
- */
 export async function showRewarded() {
+  if (!Capacitor.isNativePlatform()) return false;
   try {
-    const AdMob = await getReadyAdMob();
-    if (!AdMob) return false;
-
-    const result = await AdMob.showRewardVideoAd();
-    console.log('[AdService] Rewarded ad shown, result:', result);
+    await AdMob.showRewardVideoAd();
     return true;
   } catch (e) {
-    console.warn('[AdService] Rewarded show failed:', e.message);
+    console.warn('[AdService] showRewarded error:', e);
     return false;
   }
 }
 
-/**
- * Listen for rewarded ad events.
- * Returns a cleanup function to remove the listener.
- */
 export async function addRewardedListener(callback) {
+  if (!Capacitor.isNativePlatform()) return () => {};
   try {
-    const AdMob = await getReadyAdMob();
-    if (!AdMob) return () => {};
-
-    const { RewardAdPluginEvents } = await import('@capacitor-community/admob');
-
     const listener = await AdMob.addListener(
       RewardAdPluginEvents.Rewarded,
-      (reward) => {
-        console.log('[AdService] Reward earned:', reward);
-        callback(reward);
-      }
+      (reward) => callback(reward),
     );
-
     return () => listener.remove();
-  } catch (e) {
-    console.warn('[AdService] Reward listener failed:', e.message);
+  } catch {
     return () => {};
   }
 }
