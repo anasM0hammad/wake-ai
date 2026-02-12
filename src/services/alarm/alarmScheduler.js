@@ -7,21 +7,32 @@ import {
   cancelNativeAlarm
 } from './nativeAlarm';
 
-const ALARM_CHANNEL_ID = 'wakeai-alarm-channel';
-const ALARM_CHANNEL_NAME = 'WakeAI Alarms';
+// MUST match AlarmNotificationHelper.FALLBACK_CHANNEL_ID in Java.
+// This channel is created natively (with STREAM_ALARM sound + CATEGORY_ALARM)
+// in WakeAIAlarmPlugin.schedule() via AlarmNotificationHelper.ensureFallbackChannel().
+// Using the fallback channel ensures that even if the app is killed and only
+// Capacitor's LocalNotification fires, the notification plays on STREAM_ALARM.
+const ALARM_CHANNEL_ID = 'wakeai_alarm_fallback_channel';
 
 let notificationListenerRegistered = false;
 let onAlarmTriggerCallback = null;
 
 export async function setupNotificationChannel() {
+  // The alarm notification channel is created natively by
+  // AlarmNotificationHelper.ensureFallbackChannel() (called from
+  // WakeAIAlarmPlugin.schedule()). This ensures the channel uses
+  // STREAM_ALARM audio attributes, which Capacitor's JS createChannel
+  // API doesn't support. We still call createChannel here as a fallback
+  // for the rare case where the native schedule hasn't been called yet.
   try {
     await LocalNotifications.createChannel({
       id: ALARM_CHANNEL_ID,
-      name: ALARM_CHANNEL_NAME,
-      description: 'Alarm notifications for WakeAI',
+      name: 'WakeAI Alarm (Fallback)',
+      description: 'Backup alarm notification when main service is delayed',
       importance: 5, // Max importance
       visibility: 1, // Public
-      sound: 'gentle.mp3',
+      // Use resource name WITHOUT extension — Capacitor resolves from res/raw/
+      sound: 'gentle',
       vibration: true,
       lights: true,
       lightColor: '#FF0000'
@@ -113,7 +124,6 @@ export async function scheduleAlarm(alarm) {
     // If native fires first the notification is harmless. If native fails,
     // this + the JS timer (AlarmMonitor) are the safety net.
     const notificationId = hashStringToInt(alarm.id);
-    const soundFile = `${toneName}.mp3`;
 
     await LocalNotifications.schedule({
       notifications: [
@@ -126,12 +136,17 @@ export async function scheduleAlarm(alarm) {
             allowWhileIdle: true
           },
           channelId: ALARM_CHANNEL_ID,
-          sound: soundFile,
+          // Sound is null — AlarmService handles audio on STREAM_ALARM.
+          // Capacitor expects resource name without extension (e.g. "gentle"),
+          // but we intentionally set null because the native service manages audio.
+          sound: null,
           actionTypeId: 'ALARM_ACTION',
           extra: {
             alarmId: alarm.id,
             time: alarm.time,
             difficulty: alarm.difficulty,
+            tone: toneName,
+            vibration: settings.vibrationEnabled !== false,
             type: 'alarm'
           },
           ongoing: true,

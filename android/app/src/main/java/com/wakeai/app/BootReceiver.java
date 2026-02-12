@@ -51,41 +51,38 @@ public class BootReceiver extends BroadcastReceiver {
      * Schedule an alarm using AlarmManager.setAlarmClock().
      * This is the same logic used by WakeAIAlarmPlugin.
      *
-     * IMPORTANT: Uses PendingIntent.getForegroundService() targeting AlarmService
-     * directly — NOT PendingIntent.getBroadcast() through AlarmReceiver. On Android
-     * 12+ (API 31), startForegroundService() from a BroadcastReceiver's background
-     * context is silently blocked when the app process is dead. By using
-     * getForegroundService(), the system starts AlarmService as a foreground service
-     * itself, which is guaranteed to work regardless of app state.
+     * Uses PendingIntent.getBroadcast() targeting AlarmReceiver. This is more
+     * reliable than getForegroundService() because:
+     *   - BroadcastReceivers triggered by setAlarmClock() are exempt from
+     *     Android 12+ background activity start (BAL) restrictions.
+     *   - On aggressive OEMs (Xiaomi, Huawei, Oppo, Vivo, Samsung) that kill
+     *     background processes, a broadcast PendingIntent is handled by the
+     *     system's alarm subsystem and delivered even when the app is dead.
+     *   - getForegroundService() can be silently blocked on Android 14+ (API 34)
+     *     if the system considers the app not in a valid foreground state.
+     *
+     * AlarmReceiver.onReceive() then:
+     *   1. Posts an immediate fallback notification (full-screen + CATEGORY_ALARM)
+     *   2. Starts AlarmService as a foreground service (audio + vibration)
+     *   3. Launches MainActivity directly (BAL-exempt from setAlarmClock)
      */
     static void scheduleAlarm(Context context, long triggerAtMillis) {
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (am == null) return;
 
-        // Intent targeting AlarmService DIRECTLY — bypasses BroadcastReceiver entirely
-        Intent serviceIntent = new Intent(context, AlarmService.class);
-        serviceIntent.setAction(AlarmService.ACTION_START_ALARM);
+        // Target AlarmReceiver via broadcast — most reliable delivery method.
+        Intent receiverIntent = new Intent(context, AlarmReceiver.class);
+        receiverIntent.setAction(AlarmService.ACTION_START_ALARM);
 
         int piFlags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             piFlags |= PendingIntent.FLAG_IMMUTABLE;
         }
 
-        // getForegroundService: system starts the service as foreground on our behalf.
-        // Works even when the app process is dead — system creates the process,
-        // starts the service, and it has ~10 seconds to call startForeground().
-        PendingIntent alarmPI;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            alarmPI = PendingIntent.getForegroundService(
-                    context, 0, serviceIntent, piFlags);
-        } else {
-            alarmPI = PendingIntent.getService(
-                    context, 0, serviceIntent, piFlags);
-        }
+        PendingIntent alarmPI = PendingIntent.getBroadcast(
+                context, 0, receiverIntent, piFlags);
 
         // Show-intent: opens the app when user taps the alarm icon in status bar.
-        // Must include ALARM_FIRED action so MainActivity.handleAlarmIntent()
-        // properly sets the flag and notifies JS to navigate to the ringing screen.
         Intent showIntent = new Intent(context, MainActivity.class);
         showIntent.setAction("com.wakeai.app.ALARM_FIRED");
         showIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -96,6 +93,6 @@ public class BootReceiver extends BroadcastReceiver {
         AlarmClockInfo clockInfo = new AlarmClockInfo(triggerAtMillis, showPI);
         am.setAlarmClock(clockInfo, alarmPI);
 
-        Log.i(TAG, "Alarm scheduled via getForegroundService at " + triggerAtMillis);
+        Log.i(TAG, "Alarm scheduled via getBroadcast→AlarmReceiver at " + triggerAtMillis);
     }
 }
