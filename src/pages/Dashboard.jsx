@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStats } from '../hooks/useStats';
-import { useBannerAd, useRewardedAd } from '../hooks/useAds';
+import { useRewardedAd } from '../hooks/useAds';
 import { Card } from '../components/common';
 
 export default function Dashboard() {
@@ -9,9 +9,6 @@ export default function Dashboard() {
   const { stats } = useStats();
   const { showRewardedAd, isRewardedReady, rewarded } = useRewardedAd();
   const [hasWatchedAd, setHasWatchedAd] = useState(false);
-
-  // Show banner ad at bottom
-  useBannerAd();
 
   const statsUnlocked = rewarded || hasWatchedAd;
 
@@ -22,63 +19,6 @@ export default function Dashboard() {
     }
   };
 
-  // Gate: user must watch a rewarded video to view stats
-  if (!statsUnlocked) {
-    return (
-      <div className="min-h-screen bg-[#050505]">
-        {/* Header */}
-        <header className="sticky top-0 z-10 bg-[#050505] border-b border-[#1A1A1A] safe-area-top">
-          <div className="flex items-center h-14 px-4">
-            <button
-              onClick={() => navigate('/')}
-              className="p-2 -ml-2 rounded-lg hover:bg-[#161616] transition-colors"
-            >
-              <svg className="w-6 h-6 text-[#636363]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h1 className="ml-2 text-lg font-semibold text-[#F1F1F1]">Dashboard</h1>
-          </div>
-        </header>
-
-        <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
-          <div className="w-20 h-20 rounded-full bg-[#10B981]/10 flex items-center justify-center mb-6">
-            <svg className="w-10 h-10 text-[#10B981]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7" rx="1"/>
-              <rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/>
-              <rect x="14" y="14" width="7" height="7" rx="1"/>
-            </svg>
-          </div>
-          <h2 className="text-xl font-bold text-[#F1F1F1] mb-2">
-            Your Wake-up Stats
-          </h2>
-          <p className="text-[#636363] mb-8 max-w-sm">
-            Watch a short video to unlock your detailed performance stats and streaks.
-          </p>
-          <button
-            onClick={handleWatchAd}
-            disabled={!isRewardedReady}
-            className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold text-lg transition-all active:scale-95 ${
-              isRewardedReady
-                ? 'bg-[#10B981] hover:bg-[#059669] text-white shadow-lg shadow-[#10B981]/25'
-                : 'bg-[#161616] text-[#636363] cursor-not-allowed'
-            }`}
-          >
-            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5v14l11-7z"/>
-            </svg>
-            {isRewardedReady ? 'Watch & Unlock' : 'Loading Ad...'}
-          </button>
-        </div>
-
-        {/* Spacer for native banner ad overlay */}
-        <div className="h-16 flex-shrink-0" />
-      </div>
-    );
-  }
-
-  // Stats are unlocked — show the full dashboard
   const totalAlarms = (stats.wins || 0) + (stats.kills || 0) + (stats.fails || 0);
   const successRate = totalAlarms > 0
     ? Math.round(((stats.wins || 0) / totalAlarms) * 100)
@@ -104,8 +44,8 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <div className="p-4 space-y-6 pb-24">
-        {/* Success Rate */}
+      <div className="p-4 space-y-6 pb-8">
+        {/* Success Rate — always visible */}
         <Card className="text-center py-8">
           <div className="relative inline-flex items-center justify-center">
             <svg className="w-32 h-32 transform -rotate-90">
@@ -140,135 +80,160 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="text-center py-6">
-            <div className="text-3xl font-bold text-[#34D399] mb-1">
-              {stats.wins || 0}
-            </div>
-            <div className="text-sm text-[#636363]">
-              Successful Wakeups
-            </div>
-          </Card>
-
-          <Card className="text-center py-6">
-            <div className="text-3xl font-bold text-[#B0B0B0] mb-1">
-              {stats.kills || 0}
-            </div>
-            <div className="text-sm text-[#636363]">
-              Kill Switch Uses
-            </div>
-          </Card>
-
-          <Card className="text-center py-6">
-            <div className="text-3xl font-bold text-[#EF4444] mb-1">
-              {stats.fails || 0}
-            </div>
-            <div className="text-sm text-[#636363]">
-              Failed Alarms
-            </div>
-          </Card>
-
-          <Card className="text-center py-6">
-            <div className="text-3xl font-bold text-[#10B981] mb-1">
-              {stats.totalQuestionsAnswered || 0}
-            </div>
-            <div className="text-sm text-[#636363]">
-              Questions Answered
-            </div>
-          </Card>
-        </div>
-
-        {/* Streaks */}
-        <Card>
-          <h2 className="text-xs font-medium text-[#636363] uppercase tracking-wide mb-4">
-            Streaks
-          </h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#10B981]/20 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-[#34D399]" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div>
-                  <div className="font-medium text-[#F1F1F1]">
-                    Current Streak
-                  </div>
-                  <div className="text-sm text-[#636363]">
-                    Consecutive successful wakeups
-                  </div>
-                </div>
-              </div>
-              <div className="text-2xl font-bold text-[#F1F1F1]">
-                {stats.currentStreak || 0}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#D4A053]/20 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-[#D4A053]" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                </div>
-                <div>
-                  <div className="font-medium text-[#F1F1F1]">
-                    Best Streak
-                  </div>
-                  <div className="text-sm text-[#636363]">
-                    Your all-time record
-                  </div>
-                </div>
-              </div>
-              <div className="text-2xl font-bold text-[#F1F1F1]">
-                {stats.longestStreak || 0}
-              </div>
-            </div>
+        {/* Ad gate — show unlock prompt if not yet unlocked */}
+        {!statsUnlocked && (
+          <div className="flex flex-col items-center text-center py-4">
+            <p className="text-[#636363] mb-6 max-w-sm">
+              Watch a short video to unlock detailed stats, streaks, and insights.
+            </p>
+            <button
+              onClick={handleWatchAd}
+              disabled={!isRewardedReady}
+              className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold text-lg transition-all active:scale-95 ${
+                isRewardedReady
+                  ? 'bg-[#10B981] hover:bg-[#059669] text-white shadow-lg shadow-[#10B981]/25'
+                  : 'bg-[#161616] text-[#636363] cursor-not-allowed'
+              }`}
+            >
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+              {isRewardedReady ? 'Watch & Unlock' : 'Loading Ad...'}
+            </button>
           </div>
-        </Card>
+        )}
 
-        {/* Insights */}
-        <Card>
-          <h2 className="text-xs font-medium text-[#636363] uppercase tracking-wide mb-4">
-            Insights
-          </h2>
-          <div className="space-y-3">
-            <div className="p-3 bg-[#161616] rounded-xl">
-              <div className="text-sm text-[#636363]">
-                Avg. questions per session
-              </div>
-              <div className="text-lg font-semibold text-[#F1F1F1]">
-                {avgQuestionsPerSession} questions
-              </div>
-            </div>
-
-            <div className="p-3 bg-[#161616] rounded-xl">
-              <div className="text-sm text-[#636363]">
-                Total alarms set
-              </div>
-              <div className="text-lg font-semibold text-[#F1F1F1]">
-                {totalAlarms} alarms
-              </div>
-            </div>
-
-            {stats.lastWakeupTime && (
-              <div className="p-3 bg-[#161616] rounded-xl">
+        {/* Detailed stats — only shown after watching ad */}
+        {statsUnlocked && (
+          <>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="text-center py-6">
+                <div className="text-3xl font-bold text-[#34D399] mb-1">
+                  {stats.wins || 0}
+                </div>
                 <div className="text-sm text-[#636363]">
-                  Last successful wakeup
+                  Successful Wakeups
                 </div>
-                <div className="text-lg font-semibold text-[#F1F1F1]">
-                  {new Date(stats.lastWakeupTime).toLocaleDateString()}
+              </Card>
+
+              <Card className="text-center py-6">
+                <div className="text-3xl font-bold text-[#B0B0B0] mb-1">
+                  {stats.kills || 0}
+                </div>
+                <div className="text-sm text-[#636363]">
+                  Kill Switch Uses
+                </div>
+              </Card>
+
+              <Card className="text-center py-6">
+                <div className="text-3xl font-bold text-[#EF4444] mb-1">
+                  {stats.fails || 0}
+                </div>
+                <div className="text-sm text-[#636363]">
+                  Failed Alarms
+                </div>
+              </Card>
+
+              <Card className="text-center py-6">
+                <div className="text-3xl font-bold text-[#10B981] mb-1">
+                  {stats.totalQuestionsAnswered || 0}
+                </div>
+                <div className="text-sm text-[#636363]">
+                  Questions Answered
+                </div>
+              </Card>
+            </div>
+
+            {/* Streaks */}
+            <Card>
+              <h2 className="text-xs font-medium text-[#636363] uppercase tracking-wide mb-4">
+                Streaks
+              </h2>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#10B981]/20 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-[#34D399]" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="font-medium text-[#F1F1F1]">
+                        Current Streak
+                      </div>
+                      <div className="text-sm text-[#636363]">
+                        Consecutive successful wakeups
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-[#F1F1F1]">
+                    {stats.currentStreak || 0}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#D4A053]/20 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-[#D4A053]" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="font-medium text-[#F1F1F1]">
+                        Best Streak
+                      </div>
+                      <div className="text-sm text-[#636363]">
+                        Your all-time record
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-[#F1F1F1]">
+                    {stats.longestStreak || 0}
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
-        </Card>
-      </div>
+            </Card>
 
-      {/* Spacer for native banner ad overlay */}
-      <div className="h-16 flex-shrink-0" />
+            {/* Insights */}
+            <Card>
+              <h2 className="text-xs font-medium text-[#636363] uppercase tracking-wide mb-4">
+                Insights
+              </h2>
+              <div className="space-y-3">
+                <div className="p-3 bg-[#161616] rounded-xl">
+                  <div className="text-sm text-[#636363]">
+                    Avg. questions per session
+                  </div>
+                  <div className="text-lg font-semibold text-[#F1F1F1]">
+                    {avgQuestionsPerSession} questions
+                  </div>
+                </div>
+
+                <div className="p-3 bg-[#161616] rounded-xl">
+                  <div className="text-sm text-[#636363]">
+                    Total alarms set
+                  </div>
+                  <div className="text-lg font-semibold text-[#F1F1F1]">
+                    {totalAlarms} alarms
+                  </div>
+                </div>
+
+                {stats.lastWakeupTime && (
+                  <div className="p-3 bg-[#161616] rounded-xl">
+                    <div className="text-sm text-[#636363]">
+                      Last successful wakeup
+                    </div>
+                    <div className="text-lg font-semibold text-[#F1F1F1]">
+                      {new Date(stats.lastWakeupTime).toLocaleDateString()}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+          </>
+        )}
+      </div>
     </div>
   );
 }

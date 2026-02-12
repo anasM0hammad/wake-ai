@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSettings } from '../hooks/useSettings';
-import { useBannerAd } from '../hooks/useAds';
 import { Button, Toggle, Modal, Card } from '../components/common';
 import { DIFFICULTY_MODES, QUESTION_CATEGORIES, ALARM_TONES } from '../utils/constants';
 import { playAlarm, stopAlarm } from '../services/alarm/audioPlayer';
@@ -20,9 +19,6 @@ export default function Settings() {
   const confirmInputRefs = useRef([]);
 
   const tonePreviewRef = useRef(null);
-
-  // Show banner ad at bottom
-  useBannerAd();
 
   // Stop tone preview on unmount
   useEffect(() => {
@@ -47,6 +43,7 @@ export default function Settings() {
   };
 
   const clearData = async () => {
+    // Clear WebLLM model cache (Cache API)
     try {
       const cacheNames = await caches.keys();
       for (const cache of cacheNames) {
@@ -58,6 +55,17 @@ export default function Settings() {
       console.warn('[Settings] Cache API unavailable, skipping cache clear');
     }
 
+    // Clear all app data from localStorage
+    try {
+      localStorage.removeItem('wakeai_stats');
+      localStorage.removeItem('wakeai_alarm');
+      localStorage.removeItem('wakeai_questions');
+      localStorage.removeItem('wakeai_question_pool');
+    } catch (e) {
+      console.warn('[Settings] Failed to clear localStorage keys:', e);
+    }
+
+    // Reset settings to defaults (also triggers onboarding)
     updateSettings({
       difficulty: 'EASY',
       selectedCategories: ['math'],
@@ -367,9 +375,6 @@ export default function Settings() {
           </Button>
         </Card>
       </div>
-
-      {/* Spacer for native banner ad overlay */}
-      <div className="h-16 flex-shrink-0" />
 
       {/* Reset Confirmation Modal */}
       <Modal

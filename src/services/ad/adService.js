@@ -10,6 +10,7 @@ import { Capacitor } from '@capacitor/core';
 import { AD_CONFIG } from '../../config/adConfig';
 
 let initialized = false;
+let bannerCreated = false;
 
 /**
  * Initialize AdMob SDK. Call once at app startup.
@@ -38,6 +39,8 @@ export async function initializeAds() {
 
 /**
  * Show a banner ad at the bottom of the screen.
+ * If a banner was previously created and hidden, resume it instead
+ * of creating a new one (avoids duplicate AdView / NPE crashes).
  */
 export async function showBanner() {
   if (!Capacitor.isNativePlatform()) return;
@@ -48,20 +51,26 @@ export async function showBanner() {
     if (!initialized) return;
   }
 
-  try {
-    AdMob.addListener(BannerAdPluginEvents.Loaded, () => {
-      console.log('[AdService] Banner loaded');
-    });
-    AdMob.addListener(BannerAdPluginEvents.FailedToLoad, (err) => {
-      console.error('[AdService] Banner failed:', err);
-    });
+  // If banner already exists, just resume visibility
+  if (bannerCreated) {
+    try {
+      await AdMob.resumeBanner();
+    } catch {
+      // resumeBanner may not exist in older plugin versions; fall through
+      // to create a new banner
+      bannerCreated = false;
+    }
+    if (bannerCreated) return;
+  }
 
+  try {
     await AdMob.showBanner({
       adId: AD_CONFIG.BANNER_ID,
       adSize: BannerAdSize.ADAPTIVE_BANNER,
       position: BannerAdPosition.BOTTOM_CENTER,
       margin: 0,
     });
+    bannerCreated = true;
   } catch (e) {
     console.warn('[AdService] showBanner error:', e);
   }
