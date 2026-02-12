@@ -38,10 +38,19 @@ public class WakeAIAlarmPlugin extends Plugin {
         String time = call.getString("time");
         String tone = call.getString("tone", "gentle");
         boolean vibration = call.getBoolean("vibration", true);
-        double triggerAtDouble = call.getDouble("triggerAt", 0.0);
-        long triggerAt = (long) triggerAtDouble;
+
+        // IMPORTANT: Do NOT use call.getDouble() for triggerAt.
+        // Capacitor 6's getDouble() handles Double, Float, Integer but NOT Long.
+        // JavaScript sends epoch millis (e.g. 1770895200000) which exceeds
+        // Integer.MAX_VALUE, so JSONObject stores it as Long. getDouble()
+        // returns the default 0.0, causing the validation below to always fail
+        // and the native alarm to never be scheduled.
+        // Use getData().optLong() which correctly handles Long values.
+        long triggerAt = call.getData().optLong("triggerAt", 0);
 
         if (alarmId == null || time == null || triggerAt <= 0) {
+            Log.e(TAG, "Validation failed — alarmId: " + alarmId
+                    + ", time: " + time + ", triggerAt: " + triggerAt);
             call.reject("Missing required fields: alarmId, time, triggerAt");
             return;
         }
