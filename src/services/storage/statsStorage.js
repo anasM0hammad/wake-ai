@@ -8,7 +8,10 @@ const DEFAULT_STATS = {
   kills: 0,
   fails: 0,
   totalQuestionsAnswered: 0,
-  totalQuestionsCorrect: 0
+  totalQuestionsCorrect: 0,
+  currentStreak: 0,
+  longestStreak: 0,
+  lastWakeupTime: null
 };
 
 export function getStats() {
@@ -18,12 +21,16 @@ export function getStats() {
 
 export function recordWin(questionsAnswered, questionsCorrect) {
   const stats = getStats();
+  const newStreak = (stats.currentStreak || 0) + 1;
   const updated = {
     ...stats,
     wins: stats.wins + 1,
     totalAlarms: stats.totalAlarms + 1,
     totalQuestionsAnswered: stats.totalQuestionsAnswered + questionsAnswered,
-    totalQuestionsCorrect: stats.totalQuestionsCorrect + questionsCorrect
+    totalQuestionsCorrect: stats.totalQuestionsCorrect + questionsCorrect,
+    currentStreak: newStreak,
+    longestStreak: Math.max(stats.longestStreak || 0, newStreak),
+    lastWakeupTime: Date.now()
   };
   set(STATS_KEY, updated);
   return updated;
@@ -34,7 +41,8 @@ export function recordKill() {
   const updated = {
     ...stats,
     kills: stats.kills + 1,
-    totalAlarms: stats.totalAlarms + 1
+    totalAlarms: stats.totalAlarms + 1,
+    currentStreak: 0
   };
   set(STATS_KEY, updated);
   return updated;
@@ -47,7 +55,8 @@ export function recordFail(questionsAnswered, questionsCorrect) {
     fails: stats.fails + 1,
     totalAlarms: stats.totalAlarms + 1,
     totalQuestionsAnswered: stats.totalQuestionsAnswered + questionsAnswered,
-    totalQuestionsCorrect: stats.totalQuestionsCorrect + questionsCorrect
+    totalQuestionsCorrect: stats.totalQuestionsCorrect + questionsCorrect,
+    currentStreak: 0
   };
   set(STATS_KEY, updated);
   return updated;
