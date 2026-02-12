@@ -10,6 +10,7 @@ import { Capacitor } from '@capacitor/core';
 import { AD_CONFIG } from '../../config/adConfig';
 
 let initialized = false;
+let bannerCreated = false;
 
 /**
  * Initialize AdMob SDK. Call once at app startup.
@@ -38,6 +39,8 @@ export async function initializeAds() {
 
 /**
  * Show a banner ad at the bottom of the screen.
+ * On first call creates the banner; on subsequent calls resumes
+ * the previously hidden banner (avoids destroying/recreating the AdView).
  */
 export async function showBanner() {
   if (!Capacitor.isNativePlatform()) return;
@@ -49,6 +52,12 @@ export async function showBanner() {
   }
 
   try {
+    // Banner already exists — just unhide it
+    if (bannerCreated) {
+      await AdMob.resumeBanner();
+      return;
+    }
+
     AdMob.addListener(BannerAdPluginEvents.Loaded, () => {
       console.log('[AdService] Banner loaded');
     });
@@ -62,6 +71,7 @@ export async function showBanner() {
       position: BannerAdPosition.BOTTOM_CENTER,
       margin: 0,
     });
+    bannerCreated = true;
   } catch (e) {
     console.warn('[AdService] showBanner error:', e);
   }
