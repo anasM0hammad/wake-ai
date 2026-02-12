@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.WindowManager;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.community.admob.AdMob;
 
 public class MainActivity extends BridgeActivity {
 
@@ -23,6 +24,7 @@ public class MainActivity extends BridgeActivity {
         // Register plugins before super (which initializes the bridge)
         registerPlugin(VolumeGuardPlugin.class);
         registerPlugin(WakeAIAlarmPlugin.class);
+        registerPlugin(AdMob.class);
 
         super.onCreate(savedInstanceState);
 
