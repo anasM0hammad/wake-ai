@@ -117,6 +117,10 @@ public class AlarmService extends Service {
         Notification notification = buildAlarmNotification();
         startForeground(NOTIFICATION_ID, notification);
 
+        // Cancel the fallback notification (AlarmNotificationHelper) now that
+        // the real foreground service notification is showing.
+        AlarmNotificationHelper.cancelFallbackNotification(this);
+
         // CRITICAL: Launch the activity AFTER startForeground().
         // A foreground service has an exemption from Android 12+ background
         // activity start restrictions (BAL). This is the ONLY reliable way

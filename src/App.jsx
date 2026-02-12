@@ -85,7 +85,12 @@ import { ErrorBoundary, AlarmErrorBoundary } from './components/common';
 import AlarmMonitor from './components/AlarmMonitor';
 import { isOnboardingComplete } from './services/storage/settingsStorage';
 import { initializeBackgroundService, cleanupBackgroundService } from './services/alarm/backgroundService';
-import { setupNotificationChannel, setOnAlarmTrigger, removeNotificationListeners } from './services/alarm/alarmScheduler';
+import {
+  setupNotificationChannel,
+  setupNotificationListeners as registerNotificationListeners,
+  setOnAlarmTrigger,
+  removeNotificationListeners
+} from './services/alarm/alarmScheduler';
 import { initializeQuestionPool } from './services/llm/questionPool';
 import { initializeModel, unloadModel } from './services/llm/webllm';
 import { initializeAds } from './services/ad';
@@ -129,8 +134,10 @@ function AppContent() {
     //    the navigation to /alarm-ringing happens too late or not at all.
     await checkNativeAlarmLaunch();
 
-    // 3. Set up LocalNotification trigger callback
-    setupNotificationListeners();
+    // 3. Set up LocalNotification trigger callback + register Capacitor listeners.
+    //    Awaited so queued events (from cold-start notification taps) are captured
+    //    before the rest of init runs.
+    await setupNotificationListeners();
 
     // ── Remaining init (non-alarm-critical) ──────────────────────────
 
@@ -161,13 +168,17 @@ function AppContent() {
     console.log('WakeAI app initialized');
   };
 
-  const setupNotificationListeners = () => {
-    // Set up callback for alarm trigger from scheduler.
-    // Notification listeners are registered once in alarmScheduler.js
-    // (via setupNotificationListeners) — do NOT add duplicate listeners here.
+  const setupNotificationListeners = async () => {
+    // 1. Set the callback FIRST — before registering listeners.
+    //    This prevents a race where a queued event (from cold-start notification tap)
+    //    fires between listener registration and callback assignment.
     setOnAlarmTrigger((alarmData) => {
       handleAlarmTrigger(alarmData);
     });
+
+    // 2. Register the underlying Capacitor LocalNotification listeners.
+    //    registerNotificationListeners() is idempotent (guarded by a flag).
+    await registerNotificationListeners();
   };
 
   const handleAlarmTrigger = (alarmData) => {

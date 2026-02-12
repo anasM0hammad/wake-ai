@@ -52,6 +52,11 @@ public class WakeAIAlarmPlugin extends Plugin {
         AlarmStorage storage = new AlarmStorage(ctx);
         storage.saveAlarm(alarmId, time, tone, vibration, triggerAt);
 
+        // Eagerly create the fallback notification channel so it exists before
+        // any alarm fires. This channel is also used by LocalNotifications
+        // (alarmScheduler.js) so Capacitor-posted notifications play on STREAM_ALARM.
+        AlarmNotificationHelper.ensureFallbackChannel(ctx);
+
         // Schedule via AlarmManager
         BootReceiver.scheduleAlarm(ctx, triggerAt);
 
@@ -82,6 +87,9 @@ public class WakeAIAlarmPlugin extends Plugin {
         Intent stopIntent = new Intent(ctx, AlarmService.class);
         stopIntent.setAction(AlarmService.ACTION_STOP_ALARM);
         ctx.startService(stopIntent);
+
+        // Cancel the fallback notification (in case AlarmService didn't start)
+        AlarmNotificationHelper.cancelFallbackNotification(ctx);
 
         // Reset the launch flag
         launchedByAlarm = false;
@@ -201,7 +209,14 @@ public class WakeAIAlarmPlugin extends Plugin {
             piFlags |= PendingIntent.FLAG_IMMUTABLE;
         }
 
-        // Cancel NEW PendingIntent type (getForegroundService → AlarmService)
+        // Cancel CURRENT PendingIntent type (getBroadcast → AlarmReceiver)
+        Intent receiverIntent = new Intent(ctx, AlarmReceiver.class);
+        receiverIntent.setAction(AlarmService.ACTION_START_ALARM);
+        PendingIntent broadcastPI = PendingIntent.getBroadcast(ctx, 0, receiverIntent, piFlags);
+        am.cancel(broadcastPI);
+
+        // Also cancel OLD PendingIntent type (getForegroundService → AlarmService)
+        // in case an alarm was scheduled before this update
         Intent serviceIntent = new Intent(ctx, AlarmService.class);
         serviceIntent.setAction(AlarmService.ACTION_START_ALARM);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -214,11 +229,7 @@ public class WakeAIAlarmPlugin extends Plugin {
             am.cancel(servicePI);
         }
 
-        // Also cancel OLD PendingIntent type (getBroadcast → AlarmReceiver)
-        // in case an alarm was scheduled before this update
-        Intent receiverIntent = new Intent(ctx, AlarmReceiver.class);
-        receiverIntent.setAction(AlarmService.ACTION_START_ALARM);
-        PendingIntent broadcastPI = PendingIntent.getBroadcast(ctx, 0, receiverIntent, piFlags);
-        am.cancel(broadcastPI);
+        // Also cancel the fallback notification if it's showing
+        AlarmNotificationHelper.cancelFallbackNotification(ctx);
     }
 }
