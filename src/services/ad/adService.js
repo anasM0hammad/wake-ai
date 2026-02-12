@@ -3,9 +3,12 @@ import { AD_CONFIG } from '../../config/adConfig';
 let admobModule = null;
 let admobExports = null;
 
-// Initialization gate — all ad operations await this before proceeding.
-// Prevents the race where child components call showBanner() before
-// App-level initializeAds() has finished (React runs children effects first).
+// Initialization gate — resolved immediately after AdMob.initialize()
+// so that ad operations don't fire before the native SDK + BannerExecutor
+// are ready. This MUST NOT wait on the consent flow because
+// requestConsentInfo() makes a network call to Google's UMP servers that
+// can hang or take 30+ seconds — blocking the gate on it would starve
+// every ad operation.
 let _initResolve;
 const _initReady = new Promise((resolve) => {
   _initResolve = resolve;
@@ -37,13 +40,47 @@ async function getReadyAdMob() {
 }
 
 /**
- * Initialize AdMob SDK and handle UMP consent flow.
- * Call once at app startup before showing any ads.
+ * Run UMP consent flow in background (non-blocking).
+ * Not required for test ads but needed for real ads in production.
+ */
+async function runConsentFlow(AdMob) {
+  try {
+    const consentInfo = await AdMob.requestConsentInfo();
+    console.log('[AdService] Consent status:', consentInfo.status);
+
+    if (
+      consentInfo.isConsentFormAvailable &&
+      consentInfo.status === admobExports.AdmobConsentStatus.REQUIRED
+    ) {
+      const result = await AdMob.showConsentForm();
+      console.log('[AdService] Consent form result:', result.status);
+    }
+  } catch (e) {
+    console.warn('[AdService] Consent flow failed (non-blocking):', e.message);
+  }
+}
+
+/**
+ * Initialize AdMob SDK. Call once at app startup.
+ *
+ * Flow:
+ *   1. Check native platform (bail on web)
+ *   2. AdMob.initialize()  — inits SDK + BannerExecutor view hierarchy
+ *   3. Open the init gate   — ad operations can now proceed
+ *   4. Consent flow          — fire-and-forget, does NOT block ads
  */
 export async function initializeAds() {
   try {
+    const { Capacitor } = await import('@capacitor/core');
+    if (!Capacitor.isNativePlatform()) {
+      console.log('[AdService] Web platform — ads disabled');
+      _initResolve();
+      return;
+    }
+
     const AdMob = await getAdMob();
     if (!AdMob) {
+      console.warn('[AdService] AdMob plugin not available');
       _initResolve();
       return;
     }
@@ -51,33 +88,27 @@ export async function initializeAds() {
     await AdMob.initialize({
       initializeForTesting: AD_CONFIG.IS_TESTING,
     });
-    console.log('[AdService] AdMob initialized');
+    console.log('[AdService] AdMob SDK initialized');
 
-    // UMP consent flow — required by Google Mobile Ads SDK before serving ads
-    try {
-      const consentInfo = await AdMob.requestConsentInfo();
-      console.log('[AdService] Consent status:', consentInfo.status);
+    // Open the gate — SDK and BannerExecutor are ready, ads can load.
+    _initResolve();
 
-      if (
-        consentInfo.isConsentFormAvailable &&
-        consentInfo.status === admobExports.AdmobConsentStatus.REQUIRED
-      ) {
-        const result = await AdMob.showConsentForm();
-        console.log('[AdService] Consent form result:', result.status);
-      }
-    } catch (consentErr) {
-      console.warn('[AdService] Consent flow failed:', consentErr.message);
-    }
+    // Consent runs in background — must not block ad operations.
+    runConsentFlow(AdMob);
   } catch (e) {
-    console.warn('[AdService] AdMob init failed (expected on web):', e.message);
-  } finally {
-    // Always unblock waiting ad operations, even if init failed
+    console.warn('[AdService] AdMob init failed:', e.message);
     _initResolve();
   }
 }
 
 /**
  * Show a banner ad at the bottom of the screen.
+ *
+ * Note: isTesting is intentionally omitted. We pass Google's official test
+ * ad unit IDs directly — the SDK always returns test creatives for those IDs
+ * regardless of the isTesting flag. Omitting the flag also avoids the
+ * AdViewIdHelper code path that overrides adId when the device is not in
+ * the testingDevices list.
  */
 export async function showBanner() {
   try {
@@ -91,14 +122,13 @@ export async function showBanner() {
       console.log('[AdService] Banner ad loaded');
     });
     AdMob.addListener(BannerAdPluginEvents.FailedToLoad, (error) => {
-      console.error('[AdService] Banner ad failed to load:', error.message, error.code);
+      console.error('[AdService] Banner FailedToLoad:', error.message, error.code);
     });
 
     await AdMob.showBanner({
       adId: AD_CONFIG.BANNER_ID,
       adSize: BannerAdSize.ADAPTIVE_BANNER,
       position: BannerAdPosition.BOTTOM_CENTER,
-      isTesting: AD_CONFIG.IS_TESTING,
       margin: 0,
     });
     console.log('[AdService] Banner requested');
@@ -143,7 +173,6 @@ export async function prepareInterstitial() {
 
     await AdMob.prepareInterstitial({
       adId: AD_CONFIG.INTERSTITIAL_ID,
-      isTesting: AD_CONFIG.IS_TESTING,
     });
     console.log('[AdService] Interstitial prepared');
   } catch (e) {
@@ -175,7 +204,6 @@ export async function prepareRewarded() {
 
     await AdMob.prepareRewardVideoAd({
       adId: AD_CONFIG.REWARDED_ID,
-      isTesting: AD_CONFIG.IS_TESTING,
     });
     console.log('[AdService] Rewarded ad prepared');
   } catch (e) {
