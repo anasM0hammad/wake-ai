@@ -182,13 +182,18 @@ function AppContent() {
 
   /**
    * Listen for native alarm events (warm start — app already in memory).
-   * When AlarmService fires and the full-screen intent brings the app to front,
-   * MainActivity fires a JS event via the plugin.
+   * When AlarmReceiver or ring() launches the activity, onNewIntent fires,
+   * and MainActivity fires this JS event via the plugin.
+   *
+   * Guard against duplicate navigation: AlarmMonitor (JS timer) may have
+   * already navigated to /alarm-ringing before this event arrives.
    */
   const setupNativeAlarmListener = () => {
     addAlarmFiredListener((data) => {
       console.log('[App] Native alarm fired event:', data);
-      navigate('/alarm-ringing', { replace: true });
+      if (window.location.pathname !== '/alarm-ringing') {
+        navigate('/alarm-ringing', { replace: true });
+      }
     });
   };
 

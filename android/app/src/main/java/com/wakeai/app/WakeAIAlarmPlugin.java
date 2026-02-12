@@ -107,17 +107,24 @@ public class WakeAIAlarmPlugin extends Plugin {
     }
 
     /**
-     * Directly start the native AlarmService from JS.
-     * Used when a JS-side trigger (timer, notification) fires the alarm —
-     * this ensures the alarm plays on STREAM_ALARM at MAX volume, shows
-     * the full-screen notification over the lock screen, and vibrates,
-     * regardless of which trigger path detected the alarm time.
+     * Start the native AlarmService AND bring the activity to the foreground.
+     *
+     * Called by JS when a trigger (JS timer, LocalNotification) detects the alarm.
+     * This does two things:
+     * 1. Starts AlarmService → STREAM_ALARM audio at MAX volume + vibration
+     * 2. Launches MainActivity with ALARM_FIRED → brings alarm UI to foreground
+     *
+     * When the app is already in the foreground, the activity launch is a no-op
+     * (singleTask + SINGLE_TOP just delivers onNewIntent). When the app is
+     * minimized, it brings the activity to the foreground so the user sees the
+     * swipe-to-dismiss screen without manually opening the app.
      */
     @PluginMethod()
     public void ring(PluginCall call) {
         Context ctx = getContext();
 
         try {
+            // 1. Start AlarmService (audio + vibration + notification)
             Intent serviceIntent = new Intent(ctx, AlarmService.class);
             serviceIntent.setAction(AlarmService.ACTION_START_ALARM);
 
@@ -128,6 +135,25 @@ public class WakeAIAlarmPlugin extends Plugin {
             }
 
             Log.i(TAG, "Native AlarmService started via ring()");
+
+            // 2. Bring activity to foreground (essential when app is minimized).
+            //    When the app is already visible, singleTask + SINGLE_TOP makes
+            //    this a harmless onNewIntent delivery.
+            try {
+                Intent activityIntent = new Intent(ctx, MainActivity.class);
+                activityIntent.setAction("com.wakeai.app.ALARM_FIRED");
+                activityIntent.addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                ctx.startActivity(activityIntent);
+                Log.i(TAG, "Activity brought to foreground via ring()");
+            } catch (Exception e) {
+                // May fail on some devices due to background activity restrictions.
+                // Not fatal — the AlarmService notification is the fallback.
+                Log.w(TAG, "Could not bring activity to foreground: " + e.getMessage());
+            }
+
             call.resolve();
         } catch (Exception e) {
             Log.e(TAG, "Failed to start AlarmService via ring()", e);
