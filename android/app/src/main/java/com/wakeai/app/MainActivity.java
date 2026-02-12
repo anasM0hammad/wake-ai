@@ -1,6 +1,5 @@
 package com.wakeai.app;
 
-import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -103,24 +102,24 @@ public class MainActivity extends BridgeActivity {
     /**
      * Enable the activity to show on the lock screen and turn the screen on.
      * This is essential for alarm apps to work properly.
+     *
+     * IMPORTANT: Do NOT call requestDismissKeyguard() or use FLAG_DISMISS_KEYGUARD.
+     * Those APIs request the system to REMOVE the lock screen, which on a secure
+     * keyguard (PIN/password/pattern) shows the credentials prompt — blocking the
+     * alarm UI. Instead, setShowWhenLocked(true) shows the activity ON TOP of
+     * the lock screen without requiring authentication. After the alarm is
+     * dismissed, the lock screen is still present underneath.
      */
     private void enableLockScreenSupport() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             // Android 8.1+ (API 27+)
             setShowWhenLocked(true);
             setTurnScreenOn(true);
-
-            // Request to dismiss keyguard (show over lock screen)
-            KeyguardManager keyguardManager = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
-            if (keyguardManager != null) {
-                keyguardManager.requestDismissKeyguard(this, null);
-            }
         } else {
             // Older Android versions - use window flags
             getWindow().addFlags(
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
-                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
             );
         }
 
