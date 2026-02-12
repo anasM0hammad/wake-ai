@@ -1,6 +1,7 @@
 import { AD_CONFIG } from '../../config/adConfig';
 
 let admobModule = null;
+let admobExports = null;
 
 /**
  * Lazily load the AdMob plugin. Returns null when running in a browser
@@ -11,6 +12,7 @@ async function getAdMob() {
   try {
     const mod = await import('@capacitor-community/admob');
     admobModule = mod.AdMob;
+    admobExports = mod;
     return admobModule;
   } catch {
     return null;
@@ -18,7 +20,8 @@ async function getAdMob() {
 }
 
 /**
- * Initialize AdMob SDK. Call once at app startup.
+ * Initialize AdMob SDK and handle UMP consent flow.
+ * Call once at app startup before showing any ads.
  */
 export async function initializeAds() {
   try {
@@ -29,6 +32,22 @@ export async function initializeAds() {
       initializeForTesting: AD_CONFIG.IS_TESTING,
     });
     console.log('[AdService] AdMob initialized');
+
+    // UMP consent flow — required by Google Mobile Ads SDK before serving ads
+    try {
+      const consentInfo = await AdMob.requestConsentInfo();
+      console.log('[AdService] Consent status:', consentInfo.status);
+
+      if (
+        consentInfo.isConsentFormAvailable &&
+        consentInfo.status === admobExports.AdmobConsentStatus.REQUIRED
+      ) {
+        const result = await AdMob.showConsentForm();
+        console.log('[AdService] Consent form result:', result.status);
+      }
+    } catch (consentErr) {
+      console.warn('[AdService] Consent flow failed:', consentErr.message);
+    }
   } catch (e) {
     console.warn('[AdService] AdMob init failed (expected on web):', e.message);
   }
@@ -42,7 +61,15 @@ export async function showBanner() {
     const AdMob = await getAdMob();
     if (!AdMob) return;
 
-    const { BannerAdSize, BannerAdPosition } = await import('@capacitor-community/admob');
+    const { BannerAdSize, BannerAdPosition, BannerAdPluginEvents } =
+      await import('@capacitor-community/admob');
+
+    AdMob.addListener(BannerAdPluginEvents.Loaded, () => {
+      console.log('[AdService] Banner ad loaded');
+    });
+    AdMob.addListener(BannerAdPluginEvents.FailedToLoad, (error) => {
+      console.error('[AdService] Banner ad failed to load:', error.message, error.code);
+    });
 
     await AdMob.showBanner({
       adId: AD_CONFIG.BANNER_ID,
@@ -51,7 +78,7 @@ export async function showBanner() {
       isTesting: AD_CONFIG.IS_TESTING,
       margin: 0,
     });
-    console.log('[AdService] Banner shown');
+    console.log('[AdService] Banner requested');
   } catch (e) {
     console.warn('[AdService] Banner failed:', e.message);
   }
@@ -141,8 +168,6 @@ export async function showRewarded() {
   try {
     const AdMob = await getAdMob();
     if (!AdMob) return false;
-
-    const { AdMobRewardItem } = await import('@capacitor-community/admob');
 
     const result = await AdMob.showRewardVideoAd();
     console.log('[AdService] Rewarded ad shown, result:', result);
