@@ -7,7 +7,7 @@ import { useBannerAd } from '../hooks/useAds';
 import AlarmForm from '../components/alarm/AlarmForm';
 import { Button, Modal } from '../components/common';
 import { getNextAlarmDate, getTimeUntilAlarm, formatTimeDisplay } from '../utils/timeUtils';
-import { DIFFICULTY_MODES } from '../utils/constants';
+import { DIFFICULTY_MODES, QUESTION_CATEGORIES } from '../utils/constants';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -179,7 +179,7 @@ export default function Home() {
 
               {/* Mode and Category Row */}
               <div className="px-6 pb-6">
-                <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center justify-center gap-2 flex-wrap">
                   <div className="bg-[#10B981]/10 border border-[#10B981]/20 px-4 py-2 rounded-2xl">
                     <span className="text-[#34D399] text-sm font-medium">
                       {difficultyInfo.name}
@@ -188,11 +188,13 @@ export default function Home() {
                       · {difficultyInfo.questions}Q
                     </span>
                   </div>
-                  <div className="bg-[#10B981]/10 border border-[#10B981]/20 px-4 py-2 rounded-2xl">
-                    <span className="text-[#34D399] text-sm font-medium capitalize">
-                      {settings?.selectedCategories?.[0] || 'Math'}
-                    </span>
-                  </div>
+                  {(settings?.selectedCategories || ['math']).map((cat) => (
+                    <div key={cat} className="bg-[#10B981]/10 border border-[#10B981]/20 px-4 py-2 rounded-2xl">
+                      <span className="text-[#34D399] text-sm font-medium">
+                        {QUESTION_CATEGORIES[cat]?.label || cat}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
