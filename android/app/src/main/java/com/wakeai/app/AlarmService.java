@@ -110,12 +110,20 @@ public class AlarmService extends Service {
     private void startAlarm() {
         isRinging = true;
 
-        // Acquire a wake lock to keep the CPU running
+        // Acquire a wake lock to keep the CPU running AND turn screen on
         acquireWakeLock();
 
         // Build and show the foreground notification with full-screen intent
         Notification notification = buildAlarmNotification();
         startForeground(NOTIFICATION_ID, notification);
+
+        // CRITICAL: Launch the activity AFTER startForeground().
+        // A foreground service has an exemption from Android 12+ background
+        // activity start restrictions (BAL). This is the ONLY reliable way
+        // to show the alarm UI when the app is killed or minimized.
+        // The notification full-screen intent is NOT reliable on unlocked phones
+        // (Android shows it as heads-up only) or on many OEMs (restricted).
+        launchAlarmActivity();
 
         // Read alarm config from SharedPreferences
         AlarmStorage storage = new AlarmStorage(this);
@@ -138,6 +146,32 @@ public class AlarmService extends Service {
         }
 
         Log.i(TAG, "Alarm started — tone: " + tone + ", vibration: " + vibrationEnabled);
+    }
+
+    /**
+     * Launch MainActivity with ALARM_FIRED action to show the swipe-to-dismiss screen.
+     *
+     * Called from startAlarm() AFTER startForeground() — at this point the service
+     * is a foreground service and has the Background Activity Launch (BAL) exemption
+     * on Android 12+ (API 31+). This works regardless of whether the app was:
+     * - Open (no-op: singleTask + SINGLE_TOP delivers onNewIntent)
+     * - Minimized (brings activity to foreground)
+     * - Killed (creates new process and launches activity)
+     */
+    private void launchAlarmActivity() {
+        try {
+            Intent activityIntent = new Intent(this, MainActivity.class);
+            activityIntent.setAction("com.wakeai.app.ALARM_FIRED");
+            activityIntent.addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+                    | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(activityIntent);
+            Log.i(TAG, "Activity launched from foreground service");
+        } catch (Exception e) {
+            // If this fails, the notification full-screen intent is the fallback.
+            Log.e(TAG, "Failed to launch activity from service", e);
+        }
     }
 
     private void stopAlarm() {
