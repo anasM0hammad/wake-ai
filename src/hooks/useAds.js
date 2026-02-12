@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   showBanner,
-  removeBanner,
+  hideBanner,
   prepareInterstitial,
   showInterstitial as showInterstitialAd,
   prepareRewarded,
@@ -10,14 +10,19 @@ import {
 } from '../services/ad';
 
 /**
- * Shows a banner ad on mount, removes it on unmount.
- * Use on pages that should display a bottom banner (Home, Settings, Dashboard).
+ * Shows a banner ad on mount, hides it on unmount.
+ *
+ * Uses hideBanner (not removeBanner) on cleanup to avoid a native race
+ * condition: removeBanner destroys the AdView on the UI thread, but if
+ * the next page's showBanner fires before the destroy completes,
+ * BannerExecutor tries to reload a null AdView and crashes with an NPE.
+ * hideBanner just toggles visibility, keeping the AdView intact.
  */
 export function useBannerAd() {
   useEffect(() => {
     showBanner();
     return () => {
-      removeBanner();
+      hideBanner();
     };
   }, []);
 }
