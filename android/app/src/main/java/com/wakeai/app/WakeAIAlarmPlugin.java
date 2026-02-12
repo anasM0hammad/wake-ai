@@ -196,15 +196,29 @@ public class WakeAIAlarmPlugin extends Plugin {
         AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
         if (am == null) return;
 
-        Intent receiverIntent = new Intent(ctx, AlarmReceiver.class);
-        receiverIntent.setAction(AlarmService.ACTION_START_ALARM);
-
         int piFlags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             piFlags |= PendingIntent.FLAG_IMMUTABLE;
         }
 
-        PendingIntent alarmPI = PendingIntent.getBroadcast(ctx, 0, receiverIntent, piFlags);
-        am.cancel(alarmPI);
+        // Cancel NEW PendingIntent type (getForegroundService → AlarmService)
+        Intent serviceIntent = new Intent(ctx, AlarmService.class);
+        serviceIntent.setAction(AlarmService.ACTION_START_ALARM);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent servicePI = PendingIntent.getForegroundService(
+                    ctx, 0, serviceIntent, piFlags);
+            am.cancel(servicePI);
+        } else {
+            PendingIntent servicePI = PendingIntent.getService(
+                    ctx, 0, serviceIntent, piFlags);
+            am.cancel(servicePI);
+        }
+
+        // Also cancel OLD PendingIntent type (getBroadcast → AlarmReceiver)
+        // in case an alarm was scheduled before this update
+        Intent receiverIntent = new Intent(ctx, AlarmReceiver.class);
+        receiverIntent.setAction(AlarmService.ACTION_START_ALARM);
+        PendingIntent broadcastPI = PendingIntent.getBroadcast(ctx, 0, receiverIntent, piFlags);
+        am.cancel(broadcastPI);
     }
 }

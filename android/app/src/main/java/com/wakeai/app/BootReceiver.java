@@ -50,22 +50,38 @@ public class BootReceiver extends BroadcastReceiver {
     /**
      * Schedule an alarm using AlarmManager.setAlarmClock().
      * This is the same logic used by WakeAIAlarmPlugin.
+     *
+     * IMPORTANT: Uses PendingIntent.getForegroundService() targeting AlarmService
+     * directly — NOT PendingIntent.getBroadcast() through AlarmReceiver. On Android
+     * 12+ (API 31), startForegroundService() from a BroadcastReceiver's background
+     * context is silently blocked when the app process is dead. By using
+     * getForegroundService(), the system starts AlarmService as a foreground service
+     * itself, which is guaranteed to work regardless of app state.
      */
     static void scheduleAlarm(Context context, long triggerAtMillis) {
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (am == null) return;
 
-        // Intent for the receiver that starts AlarmService
-        Intent receiverIntent = new Intent(context, AlarmReceiver.class);
-        receiverIntent.setAction(AlarmService.ACTION_START_ALARM);
+        // Intent targeting AlarmService DIRECTLY — bypasses BroadcastReceiver entirely
+        Intent serviceIntent = new Intent(context, AlarmService.class);
+        serviceIntent.setAction(AlarmService.ACTION_START_ALARM);
 
         int piFlags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             piFlags |= PendingIntent.FLAG_IMMUTABLE;
         }
 
-        PendingIntent alarmPI = PendingIntent.getBroadcast(
-                context, 0, receiverIntent, piFlags);
+        // getForegroundService: system starts the service as foreground on our behalf.
+        // Works even when the app process is dead — system creates the process,
+        // starts the service, and it has ~10 seconds to call startForeground().
+        PendingIntent alarmPI;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            alarmPI = PendingIntent.getForegroundService(
+                    context, 0, serviceIntent, piFlags);
+        } else {
+            alarmPI = PendingIntent.getService(
+                    context, 0, serviceIntent, piFlags);
+        }
 
         // Show-intent: opens the app when user taps the alarm icon in status bar.
         // Must include ALARM_FIRED action so MainActivity.handleAlarmIntent()
@@ -79,5 +95,7 @@ public class BootReceiver extends BroadcastReceiver {
         // setAlarmClock is Doze-exempt and highest reliability
         AlarmClockInfo clockInfo = new AlarmClockInfo(triggerAtMillis, showPI);
         am.setAlarmClock(clockInfo, alarmPI);
+
+        Log.i(TAG, "Alarm scheduled via getForegroundService at " + triggerAtMillis);
     }
 }
